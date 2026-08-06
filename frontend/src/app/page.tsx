@@ -1,355 +1,509 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/context/LanguageContext";
 import {
-  Star,
-  Shield,
+  ShieldCheck,
   Zap,
-  MapPin,
-  ChevronRight,
   Sparkles,
-  Clock,
-  CheckCircle,
   ArrowRight,
-  Search,
+  Star,
+  MapPin,
+  Clock,
   Wrench,
   Home,
-  Camera,
+  Scissors,
   Laptop,
   Brush,
   Truck,
   Heart,
+  Camera,
+  ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "HireRent — Find Trusted Professionals for Every Need",
-  description:
-    "Browse thousands of verified professionals. Compare offers by price, distance, and rating. Book instantly or post a job for custom quotes — with AI-powered matching.",
-};
-
-const categories = [
-  { icon: Wrench, label: "Home Repairs", color: "bg-blue-100 text-blue-600" },
-  { icon: Home, label: "Cleaning", color: "bg-green-100 text-green-600" },
-  { icon: Camera, label: "Photography", color: "bg-purple-100 text-purple-600" },
-  { icon: Laptop, label: "Tech Support", color: "bg-indigo-100 text-indigo-600" },
-  { icon: Brush, label: "Painting", color: "bg-orange-100 text-orange-600" },
-  { icon: Truck, label: "Moving", color: "bg-red-100 text-red-600" },
-  { icon: Heart, label: "Personal Care", color: "bg-pink-100 text-pink-600" },
-  { icon: Zap, label: "Electrical", color: "bg-yellow-100 text-yellow-600" },
-];
-
-const steps = [
-  {
-    step: "01",
-    title: "Post or Browse",
-    description:
-      "Describe your job in plain language or browse available services near you. Our AI understands what you need.",
-    icon: Search,
-    color: "from-violet-500 to-purple-600",
-  },
-  {
-    step: "02",
-    title: "Compare & Choose",
-    description:
-      "Get offers from verified providers. Compare by price, rating, and distance. AI highlights the best match.",
-    icon: Star,
-    color: "from-blue-500 to-indigo-600",
-  },
-  {
-    step: "03",
-    title: "Book & Pay Safely",
-    description:
-      "Pay via our secure escrow system. Funds are released only when you're fully satisfied with the work.",
-    icon: Shield,
-    color: "from-emerald-500 to-teal-600",
-  },
-];
-
-const stats = [
-  { value: "10,000+", label: "Verified Providers" },
-  { value: "50,000+", label: "Jobs Completed" },
-  { value: "4.9 ★", label: "Average Rating" },
-  { value: "100%", label: "Escrow Protected" },
-];
-
 export default function LandingPage() {
+  const { lang, t } = useLanguage();
+  const isAr = lang === "ar";
+
+  const categories = [
+    { icon: Wrench,    label: isAr ? "سباكة" : "Plumbing",       slug: "plumbing",          count: isAr ? "240+ محترف" : "240+ providers" },
+    { icon: Zap,       label: isAr ? "كهرباء" : "Electrical",      slug: "electrical",        count: isAr ? "180+ محترف" : "180+ providers" },
+    { icon: Home,      label: isAr ? "تنظيف منازل" : "House Cleaning",  slug: "house-cleaning",    count: isAr ? "320+ محترف" : "320+ providers" },
+    { icon: Brush,     label: isAr ? "دهانات" : "Painting",        slug: "painting",          count: isAr ? "150+ محترف" : "150+ providers" },
+    { icon: Laptop,    label: isAr ? "تقنية ومنازل ذكية" : "IT & Smart Home", slug: "it-smart-home",     count: isAr ? "90+ محترف" : "90+ providers" },
+    { icon: Scissors,  label: isAr ? "عناية شخصية" : "Personal Care",   slug: "personal-care",     count: isAr ? "210+ محترف" : "210+ providers" },
+    { icon: Truck,     label: isAr ? "نقل وعفش" : "Moving",          slug: "moving-hauling",    count: isAr ? "120+ محترف" : "120+ providers" },
+    { icon: Camera,    label: isAr ? "تصوير فوتوغرافي" : "Photography",       slug: "photography",       count: isAr ? "85+ محترف" : "85+ providers" },
+    { icon: Heart,     label: isAr ? "رعاية منزلية" : "Caregiving",        slug: "caregiving",        count: isAr ? "95+ محترف" : "95+ providers" },
+  ];
+
+  const trustPoints = [
+    {
+      icon: ShieldCheck,
+      label: isAr ? "محمي بالضمان" : "Escrow-protected",
+      text: isAr ? "يتم الاحتفاظ بمبلغك بعد العمل. تطلقه — أو تفتح نزاعاً — قبل تحرك أي أموال." : "Your payment is held after the job. You release it — or dispute — before any money moves.",
+    },
+    {
+      icon: Star,
+      label: isAr ? "مستويات سمعة موثقة" : "Verified reputation tiers",
+      text: isAr ? "يحصل كل محترف على درجة ثقة مبنية على البيانات. المستويات البرونزية، الفضية، والذهبية واضحة على كل بطاقة." : "Every provider earns a data-driven Trust Score. Bronze, Silver, Gold, and Platinum tiers are visible on every card.",
+    },
+    {
+      icon: Sparkles,
+      label: isAr ? "مطابقة الذكاء الاصطناعي" : "AI Smart Matching",
+      text: isAr ? "صف مشكلتك بلغة بسيطة. يحدد الذكاء الاصطناعي الخدمة، يقدر التكلفة، ويعرض أفضل 3 محترفين." : "Describe your problem in plain language. The AI identifies the service, estimates cost, and surfaces the top 3 providers.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* ── Navbar ──────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-xl text-gray-900">HireRent</span>
-            </div>
-
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
-              <Link href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                How it works
-              </Link>
-              <Link href="#categories" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Categories
-              </Link>
-              <Link href="/help" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Help
-              </Link>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/login"
-                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors hidden sm:block"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white gradient-primary shadow-lg hover:opacity-90 transition-opacity"
-              >
-                Get started
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Hero ────────────────────────────────────────────────────── */}
-      <section className="pt-24 pb-16 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 gradient-hero" />
-        <div className="absolute top-20 right-0 w-[600px] h-[600px] rounded-full bg-violet-100/40 blur-3xl -translate-y-1/4 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-amber-100/30 blur-3xl translate-y-1/4 -translate-x-1/4" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-xs font-semibold mb-6 animate-fade-in">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI-Powered Professional Matching
-            </div>
-
-            {/* Headline */}
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-tight mb-6 animate-slide-up">
-              Find trusted{" "}
-              <span className="text-gradient">professionals</span>{" "}
-              for any job
-            </h1>
-
-            <p className="text-lg sm:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up animate-delay-100">
-              Compare offers by price, distance, and rating. Book instantly or let AI match you
-              with the best provider — payments secured by escrow.
-            </p>
-
-            {/* Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto mb-6 animate-slide-up animate-delay-200">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="What service do you need?"
-                  className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
-                />
-              </div>
-              <div className="relative sm:w-44">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
-                />
-              </div>
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-sm font-bold text-white gradient-primary shadow-lg hover:opacity-90 transition-opacity whitespace-nowrap"
-              >
-                Find Services
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* AI Shortcut */}
-            <div className="animate-slide-up animate-delay-300">
-              <Link
-                href="/register?mode=ai"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors"
-              >
-                <Sparkles className="w-4 h-4" />
-                Or just describe your problem — let AI do the rest
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Stats Strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-16 animate-slide-up animate-delay-400">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="font-display text-2xl font-extrabold text-gray-900">{stat.value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust Strip ─────────────────────────────────────────────── */}
-      <section className="py-6 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-500" />
-              Verified providers with ID checks
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              Two-way ratings & reviews
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-violet-500" />
-              Escrow-protected payments
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-500" />
-              Urgent same-day service available
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Categories ──────────────────────────────────────────────── */}
-      <section id="categories" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              Browse by category
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              From home repairs to professional services — find exactly what you need.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat.label}
-                href="/register"
-                className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 card-hover"
-              >
-                <div className={`w-12 h-12 rounded-xl ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <cat.icon className="w-6 h-6" />
-                </div>
-                <span className="text-sm font-semibold text-gray-700 text-center">{cat.label}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 text-sm font-medium text-violet-600 hover:text-violet-700 transition-colors"
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "var(--color-canvas)", color: "var(--color-ink)" }}
+    >
+      {/* ── Navbar ─────────────────────────────────────────────── */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50"
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
+          {/* Wordmark */}
+          <Link href="/" className="flex items-center gap-2" style={{ textDecoration: "none" }}>
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              style={{ background: "var(--color-signal)" }}
             >
-              View all categories
-              <ChevronRight className="w-4 h-4" />
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span
+              className="font-display font-700 text-base tracking-tight"
+              style={{ color: "var(--color-ink)", fontWeight: 700 }}
+            >
+              {t.appName}
+            </span>
+          </Link>
+
+          {/* Nav links */}
+          <nav
+            className="hidden md:flex items-center gap-7 text-sm font-medium"
+            style={{ color: "var(--color-ink-soft)" }}
+          >
+            <a
+              href="#how-it-works"
+              className="hover:text-[var(--color-ink)] transition-colors"
+              style={{ textDecoration: "none" }}
+            >
+              {t.nav.howItWorks}
+            </a>
+            <Link
+              href="/customer/categories"
+              className="hover:text-[var(--color-ink)] transition-colors"
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              {t.nav.browseServices}
+            </Link>
+            <Link
+              href="/customer/ai-assist"
+              className="flex items-center gap-1.5"
+              style={{
+                textDecoration: "none",
+                color: "var(--color-ai)",
+                fontWeight: 600,
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {t.nav.aiAssist}
+            </Link>
+          </nav>
+
+          {/* Auth & Language */}
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link
+              href="/login"
+              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-gray-100"
+              style={{ textDecoration: "none", color: "var(--color-ink-soft)" }}
+            >
+              {t.nav.login}
+            </Link>
+            <Link href="/register" className="btn-primary" style={{ padding: "8px 16px", fontSize: "13px" }}>
+              {t.nav.register} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* ── How It Works ────────────────────────────────────────────── */}
-      <section id="how-it-works" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              How it works
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              From finding the right professional to getting the job done — we've made it simple.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {steps.map((step, i) => (
-              <div key={step.step} className="relative">
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-10 left-full w-full h-px bg-gradient-to-r from-gray-200 to-transparent -translate-x-8 z-0" />
+      {/* ── Hero — split composition ─────────────────────────── */}
+      <section className="pt-14 min-h-screen flex items-center" style={{ background: "var(--color-canvas)" }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full py-20">
+          <div className="grid lg:grid-cols-12 gap-12 items-center">
+
+            {/* Left: headline + search + CTA */}
+            <div className="lg:col-span-6 xl:col-span-7">
+              {/* AI strip */}
+              <Link
+                href="/customer/ai-assist"
+                className="inline-flex items-center gap-2 mb-8 group"
+                style={{ textDecoration: "none" }}
+              >
+                <span
+                  className="badge badge-ai"
+                  style={{ gap: 5 }}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {isAr ? "المساعد الذكي" : "AI Smart Assist"}
+                </span>
+                <span
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: "var(--color-ink-muted)" }}
+                >
+                  {isAr ? "صف مشكلتك ← مطابقة فورية" : "Describe your problem → instant match"}
+                </span>
+                <ChevronRight
+                  className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+                  style={{ color: "var(--color-ink-muted)" }}
+                />
+              </Link>
+
+              {/* Headline */}
+              <h1
+                className="font-display leading-tight mb-5"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 800,
+                  fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
+                  letterSpacing: "-0.03em",
+                  color: "var(--color-ink)",
+                  lineHeight: 1.12,
+                  textAlign: isAr ? "right" : "left",
+                }}
+              >
+                {isAr ? (
+                  <>
+                    {t.landing.heroTitleLine1}
+                    <br />
+                    <span style={{ color: "var(--color-signal)" }}>{t.landing.heroTitlePricedFairly}</span>
+                    <br />
+                    {t.landing.heroTitleLine3}
+                  </>
+                ) : (
+                  <>
+                    The professional
+                    <br />
+                    you need,{" "}
+                    <span style={{ color: "var(--color-signal)" }}>priced fairly</span>
+                    <br />
+                    and paid safely.
+                  </>
                 )}
-                <div className="relative bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-5 shadow-lg`}>
-                    <step.icon className="w-7 h-7 text-white" />
+              </h1>
+
+              <p
+                className="text-base leading-relaxed mb-8 max-w-md"
+                style={{ color: "var(--color-ink-soft)", textAlign: isAr ? "right" : "left" }}
+              >
+                {t.landing.heroSubtitle}
+              </p>
+
+              {/* Dual-Path Chooser — Signature Split-Panel Card */}
+              <div className="dual-path-card mb-8 max-w-xl">
+                {/* Left Side: Instant Book */}
+                <Link
+                  href="/customer/categories"
+                  className="dual-path-side side-instant group"
+                  aria-label="Instant Book"
+                >
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="badge badge-signal">
+                        <Zap className="w-3 h-3" />
+                        {t.landing.instantBookBadge}
+                      </span>
+                    </div>
+                    <p className="font-display text-base font-700 leading-snug mb-1" style={{ color: "var(--color-ink)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
+                      {t.landing.instantBookTitle}
+                    </p>
+                    <p className="text-xs mb-3" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
+                      {t.landing.instantBookSub}
+                    </p>
                   </div>
-                  <div className="text-xs font-bold text-gray-400 tracking-widest mb-2">
-                    STEP {step.step}
+                  <div className="pt-2 border-t border-[var(--color-border)] flex items-center justify-between">
+                    <span className="data-value text-xs font-600" style={{ color: "var(--color-signal)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                      {t.landing.instantBookFrom}
+                    </span>
+                    <span className="text-xs font-semibold flex items-center gap-1 text-[var(--color-signal)] group-hover:translate-x-0.5 transition-transform">
+                      {t.landing.instantBookBtn} <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
                   </div>
-                  <h3 className="font-display text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
+                </Link>
+
+                {/* Central Divider */}
+                <div className="dual-path-divider">
+                  <span className="dual-path-or-badge">{t.landing.orBadge}</span>
+                </div>
+
+                {/* Right Side: Custom Quote */}
+                <Link
+                  href="/customer/jobs/new"
+                  className="dual-path-side side-quote group"
+                  aria-label="Custom Quote"
+                >
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="badge badge-neutral">
+                        <MessageSquare className="w-3 h-3" />
+                        {t.landing.customQuoteBadge}
+                      </span>
+                    </div>
+                    <p className="font-display text-base font-700 leading-snug mb-1" style={{ color: "var(--color-ink)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
+                      {t.landing.customQuoteTitle}
+                    </p>
+                    <p className="text-xs mb-3" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
+                      {t.landing.customQuoteSub}
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-[var(--color-border)] flex items-center justify-between">
+                    <span className="data-value text-xs font-600" style={{ color: "var(--color-ink-soft)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                      {t.landing.customQuoteBids}
+                    </span>
+                    <span className="text-xs font-semibold flex items-center gap-1 text-[var(--color-ink)] group-hover:translate-x-0.5 transition-transform">
+                      {t.landing.customQuoteBtn} <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Trust signals */}
+              <div className="flex flex-wrap gap-4">
+                <span
+                  className="flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: "var(--color-ink-muted)" }}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--color-trust)" }} />
+                  <span>{t.landing.escrowProtected}</span>
+                </span>
+                <span
+                  className="flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: "var(--color-ink-muted)" }}
+                >
+                  <Star className="w-3.5 h-3.5" style={{ color: "var(--color-ai-bright)" }} />
+                  <span>{t.landing.verifiedTrustTiers}</span>
+                </span>
+                <span
+                  className="flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: "var(--color-ink-muted)" }}
+                >
+                  <MapPin className="w-3.5 h-3.5" style={{ color: "var(--color-signal)" }} />
+                  <span>{t.landing.nearYouNow}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Right: social proof column */}
+            <div className="lg:col-span-6 xl:col-span-5 hidden lg:block">
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {[
+                  { value: "10,000+", label: t.landing.statProvidersLabel },
+                  { value: "50,000+", label: t.landing.statJobsLabel },
+                  { value: "4.9 / 5", label: t.landing.statRatingLabel },
+                  { value: "100%", label: t.landing.statEscrowLabel },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="card p-5"
+                  >
+                    <div
+                      className="data-value text-2xl font-600 mb-0.5"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 600,
+                        color: "var(--color-ink)",
+                      }}
+                    >
+                      {s.value}
+                    </div>
+                    <div
+                      className="text-xs"
+                      style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}
+                    >
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sample provider card — shows the product UI inline */}
+              <div
+                className="card p-5"
+                style={{ border: "1px solid var(--color-border)" }}
+              >
+                <div
+                  className="text-xs font-medium uppercase tracking-wider mb-3"
+                  style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}
+                >
+                  {t.landing.exampleHeader}
+                </div>
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                    style={{ background: "var(--color-signal)" }}
+                  >
+                    AK
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-600" style={{ fontWeight: 600 }}>Ahmad Al-Karimi</span>
+                      <span className="badge tier-gold">{t.landing.goldTier}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs mb-2" style={{ color: "var(--color-ink-muted)" }}>
+                      <span className="flex items-center gap-1"><Star className="w-3 h-3" style={{ color: "var(--color-ai-bright)" }} /> 4.92</span>
+                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 2.1 km</span>
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t.landing.eta30min}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="badge badge-trust"
+                        style={{ gap: 4 }}
+                      >
+                        <ShieldCheck className="w-3 h-3" />
+                        {t.landing.verifiedBadge}
+                      </span>
+                      <span
+                        className="badge badge-ai"
+                        style={{ gap: 4 }}
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        {t.landing.aiBestMatchBadge}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div
+                      className="data-value text-sm font-600 mb-1"
+                      style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--color-ink)" }}
+                    >
+                      SAR 280
+                    </div>
+                    <button className="btn-primary" style={{ padding: "6px 14px", fontSize: "12px" }}>
+                      {t.landing.bookBtn}
+                    </button>
+                  </div>
+                </div>
+                <div
+                  className="mt-3 pt-3 text-xs"
+                  style={{
+                    borderTop: "1px solid var(--color-border)",
+                    color: "var(--color-ink-muted)",
+                  }}
+                >
+                  <span className="flex items-center gap-1" style={{ textAlign: isAr ? "right" : "left" }}>
+                    <ShieldCheck className="w-3 h-3 flex-shrink-0" style={{ color: "var(--color-trust)" }} />
+                    {t.landing.escrowNote}
+                  </span>
                 </div>
               </div>
-            ))}
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* ── Provider CTA ────────────────────────────────────────────── */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl gradient-primary overflow-hidden p-10 md:p-16 text-center">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-white blur-3xl" />
-            </div>
-            <div className="relative">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
-                Ready to grow your business?
+      {/* ── Categories Grid Section ─────────────────────────── */}
+      <section className="py-20 bg-white border-t border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
+            <div>
+              <h2 className="font-display text-2xl font-800 tracking-tight mb-2" style={{ fontFamily: "var(--font-display)", fontWeight: 800, textAlign: isAr ? "right" : "left" }}>
+                {isAr ? "استكشف الفئات" : "Explore Categories"}
               </h2>
-              <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                Join thousands of providers who earn more by connecting with customers who need their skills.
+              <p className="text-sm" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
+                {isAr ? "احجز محترفين معتمدين في كل مجال" : "Book verified professionals across all major service categories"}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/register?role=provider"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white text-violet-700 font-bold hover:bg-gray-50 transition-colors shadow-xl"
-                >
-                  Become a Provider
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white/10 text-white font-semibold border border-white/30 hover:bg-white/20 transition-colors"
-                >
-                  Find a Service
-                </Link>
-              </div>
             </div>
+            <Link
+              href="/customer/categories"
+              className="mt-4 sm:mt-0 text-sm font-semibold flex items-center gap-1 text-[var(--color-signal)]"
+              style={{ textDecoration: "none" }}
+            >
+              {t.common.viewAll} <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-4">
+            {categories.map((c) => {
+              const Icon = c.icon;
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/customer/categories/${c.slug}`}
+                  className="card p-4 flex flex-col items-center text-center card-hover group"
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
+                    style={{ background: "var(--color-signal-light)", color: "var(--color-signal)" }}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xs font-600 mb-1" style={{ color: "var(--color-ink)", fontWeight: 600 }}>
+                    {c.label}
+                  </h3>
+                  <span className="text-[10px]" style={{ color: "var(--color-ink-muted)" }}>
+                    {c.count}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-white">HireRent</span>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link href="/help" className="hover:text-white transition-colors">Help Center</Link>
-              <Link href="/register?role=provider" className="hover:text-white transition-colors">Become a Provider</Link>
-              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
-            </div>
+      {/* ── How It Works Section ───────────────────────────── */}
+      <section id="how-it-works" className="py-20" style={{ background: "var(--color-canvas)" }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="font-display text-3xl font-800 tracking-tight mb-3" style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}>
+              {t.landing.howItWorksTitle}
+            </h2>
+            <p className="text-sm" style={{ color: "var(--color-ink-soft)" }}>
+              {isAr ? "ثلاث خطوات بسيطة لحصولك على الخدمة بأمان وشفافية كاملة" : "Three simple steps to getting work done with complete security and transparency"}
+            </p>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-xs text-gray-600">
-            © {new Date().getFullYear()} HireRent. All rights reserved.
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {trustPoints.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div key={idx} className="card p-8 flex flex-col items-start relative">
+                  <span
+                    className="data-value text-3xl font-800 mb-4"
+                    style={{ fontFamily: "var(--font-mono)", color: "var(--color-signal)", fontWeight: 800 }}
+                  >
+                    0{idx + 1}
+                  </span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon className="w-5 h-5" style={{ color: "var(--color-signal)" }} />
+                    <h3 className="font-display text-lg font-700" style={{ fontFamily: "var(--font-display)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
+                      {item.label}
+                    </h3>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--color-ink-soft)", textAlign: isAr ? "right" : "left" }}>
+                    {item.text}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </footer>
+      </section>
+
     </div>
   );
 }

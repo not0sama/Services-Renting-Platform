@@ -38,16 +38,17 @@ async def get_current_user(
     return user
 
 
-def require_role(*roles: UserRole):
+def require_role(*roles: str | UserRole):
     """Factory that returns a dependency enforcing one of the given roles."""
+    allowed_roles = [r if isinstance(r, UserRole) else UserRole(r) for r in roles]
 
     async def role_checker(
         current_user: Annotated[User, Depends(get_current_user)],
     ) -> User:
-        if current_user.role not in roles:
+        if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access restricted. Required role(s): {[r.value for r in roles]}",
+                detail=f"Access restricted. Required role(s): {[r.value for r in allowed_roles]}",
             )
         return current_user
 

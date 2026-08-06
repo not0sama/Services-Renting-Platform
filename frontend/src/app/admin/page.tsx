@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Zap, LayoutDashboard, Users, Briefcase, BookOpen, AlertTriangle,
@@ -7,6 +8,7 @@ import {
   TrendingUp, Package, Clock, CheckCircle, Bell,
 } from "lucide-react";
 import Link from "next/link";
+import api from "@/lib/api";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin", active: true },
@@ -22,15 +24,24 @@ const navItems = [
   { icon: Shield, label: "Admin Roles", href: "/admin/roles" },
 ];
 
-const kpis = [
-  { label: "Total Users", value: "0", icon: Users, delta: "+0 today", color: "text-blue-600 bg-blue-50" },
-  { label: "Active Bookings", value: "0", icon: Package, delta: "0 pending", color: "text-violet-600 bg-violet-50" },
-  { label: "Revenue (Month)", value: "$0", icon: DollarSign, delta: "+0%", color: "text-emerald-600 bg-emerald-50" },
-  { label: "Open Disputes", value: "0", icon: AlertTriangle, delta: "Requires attention", color: "text-red-600 bg-red-50" },
-];
+interface KPIData { total_users: number; total_providers: number; total_bookings: number; active_bookings: number; platform_revenue: number; }
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
+  const [kpiData, setKpiData] = useState<KPIData | null>(null);
+  const [pendingProviders, setPendingProviders] = useState(0);
+
+  useEffect(() => {
+    api.get<KPIData>("/admin/analytics/kpis").then(r => setKpiData(r.data)).catch(() => {});
+    api.get<any[]>("/admin/providers/pending").then(r => setPendingProviders(r.data.length)).catch(() => {});
+  }, []);
+
+  const kpis = [
+    { label: "Total Users", value: kpiData ? String(kpiData.total_users) : "—", icon: Users, delta: `${kpiData?.total_providers ?? 0} providers`, color: "text-blue-600 bg-blue-50" },
+    { label: "Active Bookings", value: kpiData ? String(kpiData.active_bookings) : "—", icon: Package, delta: `${kpiData?.total_bookings ?? 0} total`, color: "text-violet-600 bg-violet-50" },
+    { label: "Platform Revenue", value: kpiData ? `SAR ${kpiData.platform_revenue.toFixed(0)}` : "—", icon: DollarSign, delta: "Released payments", color: "text-emerald-600 bg-emerald-50" },
+    { label: "Pending Approvals", value: String(pendingProviders), icon: AlertTriangle, delta: pendingProviders > 0 ? "Requires attention" : "All clear", color: pendingProviders > 0 ? "text-red-600 bg-red-50" : "text-gray-500 bg-gray-100" },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
@@ -113,9 +124,9 @@ export default function AdminDashboard() {
           {/* Quick Access Grid */}
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             {[
-              { icon: Shield, label: "Provider Approvals", desc: "0 pending review", href: "/admin/providers", urgent: false },
-              { icon: AlertTriangle, label: "Open Disputes", desc: "0 need attention", href: "/admin/disputes", urgent: false },
-              { icon: Star, label: "Flagged Reviews", desc: "0 awaiting moderation", href: "/admin/reviews", urgent: false },
+              { icon: Shield, label: "Provider Approvals", desc: `${pendingProviders} pending review`, href: "/admin/providers", urgent: pendingProviders > 0 },
+              { icon: BookOpen, label: "Categories", desc: "Manage service categories", href: "/admin/categories", urgent: false },
+              { icon: Package, label: "All Bookings", desc: "View & manage all bookings", href: "/admin/bookings", urgent: false },
             ].map((item) => (
               <Link
                 key={item.label}

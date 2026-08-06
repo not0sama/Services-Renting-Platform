@@ -62,16 +62,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.post<TokenResponse>("/auth/login", payload);
     authStorage.setTokens(res.data.access_token, res.data.refresh_token);
     setUser(res.data.user);
-    // Redirect to the correct dashboard
-    redirectToDashboard(res.data.user.role);
-  }, []);
+    if (res.data.user.role === "customer") router.push("/customer");
+    else if (res.data.user.role === "provider") router.push("/provider");
+    else if (res.data.user.role === "admin") router.push("/admin");
+  }, [router]);
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await api.post<TokenResponse>("/auth/register", payload);
     authStorage.setTokens(res.data.access_token, res.data.refresh_token);
     setUser(res.data.user);
-    redirectToDashboard(res.data.user.role);
-  }, []);
+    if (res.data.user.role === "customer") router.push("/customer");
+    else if (res.data.user.role === "provider") router.push("/provider");
+    else if (res.data.user.role === "admin") router.push("/admin");
+  }, [router]);
 
   const logout = useCallback(() => {
     authStorage.clearTokens();
@@ -88,12 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.post<MessageResponse>("/auth/reset-password", payload);
     return res.data;
   }, []);
-
-  function redirectToDashboard(role: string) {
-    if (role === "customer") router.push("/customer");
-    else if (role === "provider") router.push("/provider");
-    else if (role === "admin") router.push("/admin");
-  }
 
   return (
     <AuthContext.Provider

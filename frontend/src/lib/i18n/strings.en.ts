@@ -23,6 +23,11 @@ const en = {
     availability: "Availability",
     reviews: "Reviews",
     profile: "Profile",
+    howItWorks: "How it works",
+    browseServices: "Browse services",
+    aiAssist: "AI Assist",
+    backToHome: "Back to home",
+    backToBookings: "Back to bookings",
   },
 
   // Auth
@@ -58,8 +63,11 @@ const en = {
 
   // Landing
   landing: {
-    heroTitle: "Find trusted professionals for any job",
-    heroSubtitle: "Compare offers, book instantly, pay securely — all in one place.",
+    heroTitleLine1: "The professional",
+    heroTitleLine2: "you need, ",
+    heroTitlePricedFairly: "priced fairly",
+    heroTitleLine3: "and paid safely.",
+    heroSubtitle: "Post a job or book instantly. Compare bids by price, distance, and verified trust tier. Payment sits in escrow until you accept the work — no risk, no chasing.",
     searchPlaceholder: "What service do you need?",
     locationPlaceholder: "Your location",
     findButton: "Find Services",
@@ -77,6 +85,115 @@ const en = {
     trustEscrow: "Escrow-protected payments",
     becomeProvider: "Become a Provider",
     browseCategories: "Browse Categories",
+    // Dual Path
+    instantBookBadge: "Instant Book",
+    instantBookTitle: "Browse & Book Now",
+    instantBookSub: "Fixed-price listings · Instant confirmation",
+    instantBookFrom: "from SAR 120",
+    instantBookBtn: "Book slot",
+    orBadge: "OR",
+    customQuoteBadge: "Custom Quote",
+    customQuoteTitle: "Post a Job Request",
+    customQuoteSub: "Compare bids by price, distance & tier",
+    customQuoteBids: "4–6 bids in 15m",
+    customQuoteBtn: "Request bids",
+    // Trust Signals
+    escrowProtected: "Escrow protected",
+    verifiedTrustTiers: "Verified trust tiers",
+    nearYouNow: "Near you, now",
+    // Stats Grid
+    statProvidersLabel: "Verified providers",
+    statJobsLabel: "Jobs completed",
+    statRatingLabel: "Average rating",
+    statEscrowLabel: "Escrow protected",
+    // Sample Provider Preview
+    exampleHeader: "EXAMPLE: AI MATCHED PROVIDER",
+    goldTier: "Gold",
+    verifiedBadge: "Verified",
+    aiBestMatchBadge: "AI · Best match",
+    eta30min: "30 min ETA",
+    bookBtn: "Book",
+    escrowNote: "Payment held in escrow until you approve the completed work",
+  },
+
+  // Customer Dashboard
+  customer: {
+    greeting: "Good to see you",
+    subheading: "What do you need help with today?",
+    aiBannerTitle: "Not sure what service you need?",
+    aiBannerDesc: "Describe your problem in plain language — our Claude AI identifies the category, estimates costs, and matches top providers.",
+    tryAiBtn: "Try AI Smart Assist",
+    quickActionsTitle: "Quick Actions",
+    postJobCard: "Post a Job Request",
+    postJobDesc: "Get competitive quotes from nearby providers",
+    browseCatCard: "Browse Categories",
+    browseCatDesc: "Explore fixed-price services across all categories",
+    activeBookingsTitle: "Active Bookings",
+    noActiveBookings: "No active bookings right now.",
+    protectionsTitle: "HireRent Guarantees",
+    escrowGuaranteeTitle: "100% Escrow Protection",
+    escrowGuaranteeDesc: "Payment is held securely and only released when you approve completed work.",
+    verifiedGuaranteeTitle: "Verified Provider Tiers",
+    verifiedGuaranteeDesc: "Every provider is background-checked and assigned a Bronze, Silver, or Gold trust tier.",
+  },
+
+  // Provider Dashboard
+  provider: {
+    dashboardTitle: "Provider Dashboard",
+    acceptingJobs: "Accepting jobs",
+    offline: "Offline",
+    trustScoreTitle: "Your Trust Score",
+    tierGold: "Gold Tier",
+    tierSilver: "Silver Tier",
+    tierBronze: "Bronze Tier",
+    tierUnverified: "Unverified",
+    scorePoints: "Trust Points",
+    scoreSubtitle: "Complete jobs on time and receive 5-star reviews to reach higher tiers.",
+    statsEarnings: "Total Earnings",
+    statsActiveJobs: "Active Jobs",
+    statsCompleted: "Completed Jobs",
+    statsRating: "Rating",
+  },
+
+  // AI Assist
+  aiAssist: {
+    title: "AI Smart Assist",
+    subtitle: "Describe your problem in plain English or Arabic. Our AI will analyze your request, detect the category, estimate pricing, and match top verified providers.",
+    placeholder: "e.g. My kitchen sink is leaking under the cabinet and water is dripping onto the floor...",
+    analyzeBtn: "Analyze & Match Providers",
+    tryExamples: "Try an example prompt:",
+    resultTitle: "AI Match Results",
+    categoryDetected: "Detected Category",
+    estimatedCost: "Estimated Cost Range",
+    topProviders: "Recommended Top Providers",
+  },
+
+  // Escrow Panel & Demo
+  escrow: {
+    title: "Review completed work",
+    subtitle: "Your payment is held securely. Choose an action below — or it releases automatically.",
+    autoReleasesIn: "Auto-releases in",
+    autoReleasesSoon: "Auto-releases soon",
+    autoReleaseHelp: "If you take no action, payment releases automatically to the provider.",
+    acceptBtn: "Accept work & release payment",
+    acceptHelp: "Escrow hold is removed. Payment transfers immediately.",
+    revisionBtn: "Request revision",
+    revisionHelp: "Payment stays held. Provider is notified and must redo the work.",
+    disputeBtn: "Open dispute",
+    disputeHelp: "Admin reviews within 48 h. Payment frozen during investigation.",
+    protectionFooter: "Protected by HireRent Escrow — your payment is held securely and will not move without your action or dispute resolution.",
+    // Demo Card Headers
+    demoStatus: "Job Completed · Pending Approval",
+    demoTitle: "Kitchen Plumbing & Leak Repair",
+    demoProviderLabel: "Provider:",
+    demoGoldTier: "Gold Tier",
+    demoEscrowHeld: "Escrow Held",
+    demoCompletedTime: "Completed 45m ago",
+    demoInvoice: "Invoice #INV-9042",
+    demoCategory: "Plumbing Category",
+    demoCautionActive: "Showing: < 4h Caution Mode",
+    demoCautionTestBtn: "Click to test < 4h Caution Mode",
+    demoLoading: "Loading Escrow Demo...",
   },
 
   // Roles
@@ -122,7 +239,5 @@ const en = {
 
 export default en;
 
-// DeepString: like typeof en but with all leaf values typed as `string`
-// so Arabic can supply different actual string values.
 type DeepString<T> = { [K in keyof T]: T[K] extends string ? string : DeepString<T[K]> };
 export type Strings = DeepString<typeof en>;

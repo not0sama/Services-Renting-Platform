@@ -1,224 +1,437 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Zap, Bell, LayoutDashboard, Briefcase, Package, DollarSign,
-  Star, MessageCircle, Settings, LogOut, ChevronRight, TrendingUp,
-  Clock, CheckCircle, Award, ToggleLeft, ToggleRight,
+  Star, Settings, LogOut, ChevronRight, TrendingUp,
+  Clock, CheckCircle, Award, Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/context/LanguageContext";
+import api from "@/lib/api";
+import TierBadge from "@/components/TierBadge";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/provider", active: true },
-  { icon: Briefcase, label: "Job Feed", href: "/provider/jobs" },
-  { icon: Package, label: "My Offers", href: "/provider/offers" },
-  { icon: CheckCircle, label: "Active Jobs", href: "/provider/bookings/active" },
-  { icon: Package, label: "My Services", href: "/provider/services" },
-  { icon: Clock, label: "Availability", href: "/provider/availability" },
-  { icon: DollarSign, label: "Earnings", href: "/provider/earnings" },
-  { icon: Star, label: "Reviews", href: "/provider/reviews" },
-  { icon: MessageCircle, label: "Messages", href: "/provider/messages" },
-  { icon: Settings, label: "Settings", href: "/provider/settings" },
+  { icon: LayoutDashboard, label: "Dashboard",        href: "/provider",                active: true },
+  { icon: Briefcase,       label: "Job Feed",          href: "/provider/jobs" },
+  { icon: CheckCircle,     label: "Active Jobs",       href: "/provider/bookings/active" },
+  { icon: Package,         label: "My Services",       href: "/provider/services" },
+  { icon: Clock,           label: "Availability",      href: "/provider/availability" },
+  { icon: DollarSign,      label: "Earnings",          href: "/provider/earnings" },
+  { icon: Star,            label: "Reviews",           href: "/provider/reviews" },
+  { icon: Settings,        label: "Settings",          href: "/provider/settings" },
 ];
 
-const tierColors: Record<string, string> = {
-  bronze: "tier-bronze",
-  silver: "tier-silver",
-  gold: "tier-gold",
-  platinum: "tier-platinum",
-};
+const TIER_THRESHOLDS = [
+  { label: "Bronze", min: 0,  max: 50,  color: "#92400E" },
+  { label: "Silver", min: 50, max: 70,  color: "#475569" },
+  { label: "Gold",   min: 70, max: 85,  color: "#B45309" },
+  { label: "Platinum", min: 85, max: 100, color: "#0E7490" },
+];
+
+interface ProviderProfile {
+  id: number;
+  business_name: string;
+  tier: string;
+  trust_score: number;
+  avg_rating: number;
+  completed_jobs_count: number;
+  is_online: boolean;
+  on_time_rate: number;
+  completion_rate: number;
+}
+
+function Sidebar({ user, isOnline, onToggle, onLogout }: {
+  user: { name?: string; email?: string } | null;
+  isOnline: boolean;
+  onToggle: () => void;
+  onLogout: () => void;
+}) {
+  const { lang, t } = useLanguage();
+  const isAr = lang === "ar";
+
+  const providerNavItems = [
+    { icon: LayoutDashboard, label: t.nav.dashboard,        href: "/provider",                active: true },
+    { icon: Briefcase,       label: t.nav.jobs,             href: "/provider/jobs" },
+    { icon: CheckCircle,     label: isAr ? "وظائف نشطة" : "Active Jobs",       href: "/provider/bookings/active" },
+    { icon: Package,         label: t.nav.services,         href: "/provider/services" },
+    { icon: Clock,           label: t.nav.availability,     href: "/provider/availability" },
+    { icon: DollarSign,      label: t.nav.earnings,         href: "/provider/earnings" },
+    { icon: Star,            label: t.nav.reviews,          href: "/provider/reviews" },
+    { icon: Settings,        label: t.nav.settings,         href: "/provider/settings" },
+  ];
+
+  return (
+    <aside
+      className="hidden lg:flex flex-col py-5 px-3 fixed left-0 top-0 h-full z-30"
+      style={{
+        width: 220,
+        background: "var(--color-ink)",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-2 px-3 mb-7" style={{ textDecoration: "none" }}>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--color-signal)" }}>
+          <Zap className="w-3.5 h-3.5 text-white" />
+        </div>
+        <span className="font-display text-sm font-700 text-white" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
+          {t.appName}
+        </span>
+      </Link>
+
+      {/* Online / Offline toggle */}
+      <button
+        onClick={onToggle}
+        className="mx-3 mb-5 flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors"
+        style={{
+          background: isOnline ? "rgba(22,163,74,0.15)" : "rgba(255,255,255,0.05)",
+          border: `1px solid ${isOnline ? "rgba(22,163,74,0.3)" : "rgba(255,255,255,0.08)"}`,
+          cursor: "pointer",
+        }}
+        aria-label={isOnline ? "Go offline" : "Go online"}
+      >
+        <div>
+          <p className="text-xs font-medium text-left" style={{ color: isOnline ? "#4ade80" : "rgba(255,255,255,0.5)", textAlign: isAr ? "right" : "left" }}>
+            {isOnline ? `● ${isAr ? "متصل" : "Online"}` : `○ ${isAr ? "غير متصل" : "Offline"}`}
+          </p>
+          <p className="text-[11px] text-left" style={{ color: "rgba(255,255,255,0.3)", textAlign: isAr ? "right" : "left" }}>
+            {isOnline ? t.provider.acceptingJobs : (isAr ? "غير مرئي للعملاء" : "Not visible to customers")}
+          </p>
+        </div>
+        <div
+          className="w-8 h-5 rounded-full relative transition-colors"
+          style={{ background: isOnline ? "var(--color-trust)" : "rgba(255,255,255,0.15)" }}
+        >
+          <div
+            className="w-3.5 h-3.5 rounded-full absolute top-0.5 transition-all"
+            style={{
+              background: "white",
+              left: isOnline ? "calc(100% - 18px)" : "2px",
+            }}
+          />
+        </div>
+      </button>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5">
+        {providerNavItems.map((item) => (
+          <Link key={item.label} href={item.href} className={`sidebar-link ${item.active ? "active" : ""}`}>
+            <item.icon className="w-4 h-4 flex-shrink-0" />
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* User */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 16, marginTop: 16 }}>
+        <div className="flex items-center gap-2.5 px-3 mb-2">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: "var(--color-signal)" }}>
+            {user?.name?.[0]?.toUpperCase() ?? "P"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-white truncate">{user?.name}</p>
+            <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{t.roles.provider}</p>
+          </div>
+        </div>
+        <button onClick={onLogout} className="sidebar-link w-full" style={{ cursor: "pointer", border: "none", background: "none", textAlign: isAr ? "right" : "left" }}>
+          <LogOut className="w-4 h-4" />
+          {t.nav.logout}
+        </button>
+      </div>
+    </aside>
+  );
+}
 
 export default function ProviderDashboard() {
   const { user, logout } = useAuth();
+  const { lang, t } = useLanguage();
+  const isAr = lang === "ar";
+  const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [isOnline, setIsOnline] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get<ProviderProfile>("/providers/me/profile")
+      .then(res => {
+        setProfile(res.data);
+        setIsOnline(res.data.is_online);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggleOnline = async () => {
+    const next = !isOnline;
+    setIsOnline(next);
+    try { await api.patch(`/providers/me/online-status?is_online=${next}`); }
+    catch { setIsOnline(!next); }
+  };
+
+  const score = profile?.trust_score ?? 0;
+  const tierSegments = TIER_THRESHOLDS.map(tThreshold => ({
+    ...tThreshold,
+    label: isAr
+      ? tThreshold.label === "Bronze" ? "برونزي" : tThreshold.label === "Silver" ? "فضي" : tThreshold.label === "Gold" ? "ذهبي" : "بلاتيني"
+      : tThreshold.label,
+    pct: Math.min(100, Math.max(0, ((score - tThreshold.min) / (tThreshold.max - tThreshold.min)) * 100)),
+    reached: score >= tThreshold.max,
+    active: score >= tThreshold.min && score < tThreshold.max,
+  }));
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-white border-r border-gray-100 flex-col py-6 px-4 fixed left-0 top-0 h-full z-30">
-        <Link href="/" className="flex items-center gap-2.5 px-3 mb-8">
-          <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-display font-bold text-lg text-gray-900">HireRent</span>
-        </Link>
+    <div className="min-h-screen flex" style={{ background: "var(--color-canvas)" }}>
+      <Sidebar user={user} isOnline={isOnline} onToggle={toggleOnline} onLogout={logout} />
 
-        {/* Online Toggle */}
-        <div className="mx-3 mb-6 p-3 rounded-xl bg-gray-50 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-700">Status</p>
-              <p className={`text-xs font-medium ${isOnline ? "text-emerald-600" : "text-gray-400"}`}>
-                {isOnline ? "Online — accepting jobs" : "Offline"}
-              </p>
-            </div>
-            <button
-              onClick={() => setIsOnline(!isOnline)}
-              className={`transition-colors ${isOnline ? "text-emerald-500" : "text-gray-300"}`}
-            >
-              {isOnline ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
-            </button>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                item.active ? "bg-violet-50 text-violet-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="border-t border-gray-100 pt-4 mt-4">
-          <div className="flex items-center gap-3 px-3 mb-3">
-            <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-bold">
-              {user?.name?.[0]?.toUpperCase() ?? "P"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-              <p className="text-xs text-violet-600 font-medium">Provider</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+      <main className="flex-1 lg:ml-[220px]">
+        {/* Top bar */}
+        <header
+          className="sticky top-0 z-20 px-6 py-3.5 flex items-center justify-between"
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            borderBottom: "1px solid var(--color-border)",
+          }}
+        >
           <div>
-            <h1 className="font-display text-xl font-bold text-gray-900">Provider Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Hello, {user?.name?.split(" ")[0]}! Here's your overview.</p>
+            <h1 className="font-display font-700 text-base" style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "var(--color-ink)", textAlign: isAr ? "right" : "left" }}>
+              {t.provider.dashboardTitle}
+            </h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
+              {user?.name?.split(" ")[0]} — {isOnline ? `● ${t.provider.acceptingJobs}` : `○ ${t.provider.offline}`}
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/provider/notifications" className="relative w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <Bell className="w-4 h-4 text-gray-600" />
+            <LanguageSwitcher />
+            <Link
+              href="/provider/notifications"
+              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors"
+              style={{ color: "var(--color-ink-soft)" }}
+            >
+              <Bell className="w-4 h-4" />
             </Link>
           </div>
         </header>
 
-        <div className="p-6 max-w-6xl mx-auto">
-          {/* Trust Score Widget */}
-          <div className="bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white blur-2xl" />
-            </div>
-            <div className="relative flex items-start justify-between gap-4">
+        <div className="p-6 max-w-5xl mx-auto">
+
+          {/* ── Trust Score — THE north-star metric ──────────── */}
+          <div
+            className="rounded-2xl p-5 mb-5"
+            style={{
+              background: "var(--color-ink)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Award className="w-4 h-4 text-amber-300" />
-                  <span className="text-amber-300 text-xs font-semibold">Reputation Score</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="w-4 h-4" style={{ color: "var(--color-ai-bright)" }} />
+                  <span
+                    className="text-xs font-medium uppercase tracking-wider"
+                    style={{ color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-mono)", textAlign: isAr ? "right" : "left" }}
+                  >
+                    {t.provider.trustScoreTitle}
+                  </span>
                 </div>
-                <div className="text-5xl font-extrabold font-display mb-1">—</div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white/80 text-xs font-semibold border border-white/20 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-amber-300" />
-                  Bronze Tier — Getting started
-                </div>
-                <p className="text-white/70 text-xs">
-                  Complete your first bookings to build your Trust Score and climb the tiers.
+                {loading ? (
+                  <Loader2 className="w-8 h-8 animate-spin text-white opacity-50" />
+                ) : (
+                  <div className="flex items-baseline gap-3">
+                    <span
+                      className="data-value"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "3rem",
+                        fontWeight: 700,
+                        color: "white",
+                        letterSpacing: "-0.04em",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {score.toFixed(1)}
+                    </span>
+                    <span className="text-white opacity-40 text-sm">/ 100</span>
+                    <TierBadge tier={profile?.tier ?? "bronze"} />
+                  </div>
+                )}
+                <p
+                  className="text-xs mt-2"
+                  style={{ color: "rgba(255,255,255,0.4)", textAlign: isAr ? "right" : "left" }}
+                >
+                  {t.provider.scoreSubtitle}
                 </p>
               </div>
               <Link
                 href="/provider/profile"
-                className="shrink-0 text-xs font-semibold text-white/80 hover:text-white flex items-center gap-1 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium flex-shrink-0"
+                style={{
+                  color: "rgba(255,255,255,0.5)",
+                  textDecoration: "none",
+                  background: "rgba(255,255,255,0.06)",
+                  padding: "6px 12px",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
               >
-                View details <ChevronRight className="w-3.5 h-3.5" />
+                {t.nav.profile} <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Progress Bar */}
-            <div className="mt-4 relative">
-              <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full w-0 bg-white rounded-full" />
-              </div>
-              <div className="flex justify-between text-xs text-white/50 mt-1">
-                <span>Bronze</span>
-                <span>Silver (50)</span>
-                <span>Gold (70)</span>
-                <span>Platinum (85)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "Completed Jobs", value: "0", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
-              { label: "Avg Rating", value: "—", icon: Star, color: "text-amber-600 bg-amber-50" },
-              { label: "Response Rate", value: "—", icon: Clock, color: "text-blue-600 bg-blue-50" },
-              { label: "Total Earned", value: "$0", icon: DollarSign, color: "text-violet-600 bg-violet-50" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className={`w-9 h-9 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-                  <stat.icon className="w-4 h-4" />
-                </div>
-                <div className="font-display text-2xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Job Feed + Quick Links */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-display font-bold text-gray-900">Available Jobs</h3>
-                <Link href="/provider/jobs" className="text-xs text-violet-600 hover:text-violet-700 flex items-center gap-1">
-                  View feed <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-                  <Briefcase className="w-7 h-7 text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-700 mb-1">No jobs yet</p>
-                <p className="text-xs text-gray-400 mb-4">Complete your onboarding to start receiving job requests</p>
-                <Link href="/provider/onboarding" className="text-xs font-semibold text-violet-600 hover:text-violet-700">
-                  Complete Onboarding →
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="font-display font-bold text-gray-900 mb-5">Quick Setup</h3>
-              <div className="space-y-3">
-                {[
-                  { label: "Complete your profile", href: "/provider/profile", done: false },
-                  { label: "Add your service packages", href: "/provider/services", done: false },
-                  { label: "Set your availability", href: "/provider/availability", done: false },
-                  { label: "Go online to receive jobs", href: "/provider", done: false },
-                ].map((item, i) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-violet-200 hover:bg-violet-50/50 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${item.done ? "border-emerald-400 bg-emerald-400 text-white" : "border-gray-300 text-gray-500"}`}>
-                        {item.done ? <CheckCircle className="w-3 h-3" /> : i + 1}
-                      </div>
-                      <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700">{item.label}</span>
+            {/* Tier progress — 4-segment bar */}
+            <div>
+              <div className="grid grid-cols-4 gap-1 mb-1.5">
+                {tierSegments.map((t) => (
+                  <div key={t.label} className="relative">
+                    <div
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.1)" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${t.reached ? 100 : t.active ? t.pct : 0}%`,
+                          background: t.reached ? t.color : t.active ? t.color : "transparent",
+                          opacity: t.reached ? 1 : 0.8,
+                        }}
+                      />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-violet-500" />
-                  </Link>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {tierSegments.map((t) => (
+                  <span
+                    key={t.label}
+                    className="text-[10px] font-medium"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      color: score >= t.min ? t.color : "rgba(255,255,255,0.25)",
+                    }}
+                  >
+                    {t.label} {t.min > 0 ? `≥${t.min}` : ""}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* ── Stats grid ────────────────────────────────────── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {[
+              {
+                label: t.provider.statsCompleted,
+                value: profile?.completed_jobs_count ?? 0,
+                icon: CheckCircle,
+                accent: "var(--color-trust)",
+                bg: "var(--color-trust-light)",
+              },
+              {
+                label: t.provider.statsRating,
+                value: profile?.avg_rating ? `${profile.avg_rating.toFixed(1)}` : (isAr ? "جديد" : "New"),
+                unit: profile?.avg_rating ? "/ 5.0" : "",
+                icon: Star,
+                accent: "var(--color-ai-bright)",
+                bg: "var(--color-ai-bg)",
+              },
+              {
+                label: isAr ? "نسبة الالتزام بالوقت" : "On-Time Rate",
+                value: profile?.on_time_rate ? `${(profile.on_time_rate * 100).toFixed(0)}` : "100",
+                unit: "%",
+                icon: Clock,
+                accent: "var(--color-signal)",
+                bg: "var(--color-signal-light)",
+              },
+              {
+                label: isAr ? "نسبة الإنجاز" : "Completion Rate",
+                value: profile?.completion_rate ? `${(profile.completion_rate * 100).toFixed(0)}` : "100",
+                unit: "%",
+                icon: TrendingUp,
+                accent: "var(--color-ink-soft)",
+                bg: "var(--color-canvas)",
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="card p-4">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
+                  style={{ background: stat.bg }}
+                >
+                  <stat.icon className="w-4 h-4" style={{ color: stat.accent }} />
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className="data-value font-600"
+                    style={{ fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: "1.5rem", color: "var(--color-ink)", letterSpacing: "-0.02em" }}
+                  >
+                    {loading ? "—" : stat.value}
+                  </span>
+                  {stat.unit && (
+                    <span className="text-xs" style={{ color: "var(--color-ink-muted)" }}>{stat.unit}</span>
+                  )}
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: "var(--color-ink-muted)" }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Quick actions ─────────────────────────────────── */}
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              {
+                href: "/provider/jobs",
+                icon: Briefcase,
+                label: "Browse job feed",
+                desc: "Find new requests and submit offers",
+                accent: "var(--color-signal)",
+                bg: "var(--color-signal-light)",
+              },
+              {
+                href: "/provider/bookings/active",
+                icon: CheckCircle,
+                label: "Active bookings",
+                desc: "Manage status and navigate en-route",
+                accent: "var(--color-trust)",
+                bg: "var(--color-trust-light)",
+              },
+              {
+                href: "/provider/earnings",
+                icon: DollarSign,
+                label: "Earnings & payouts",
+                desc: "Track escrow releases and invoices",
+                accent: "var(--color-ink-soft)",
+                bg: "var(--color-canvas)",
+              },
+            ].map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="card card-hover flex items-start gap-3 p-4"
+                style={{ textDecoration: "none" }}
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ background: action.bg }}
+                >
+                  <action.icon className="w-4.5 h-4.5" style={{ color: action.accent }} />
+                </div>
+                <div>
+                  <p
+                    className="text-sm font-600 mb-0.5"
+                    style={{ fontWeight: 600, color: "var(--color-ink)" }}
+                  >
+                    {action.label}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--color-ink-muted)" }}>
+                    {action.desc}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
         </div>
       </main>
     </div>

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -9,7 +10,6 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.db.engine import init_db
-from app.routers import auth as auth_router
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -26,7 +26,14 @@ async def lifespan(app: FastAPI):
         # In dev, auto-create tables if they don't exist (Alembic handles prod)
         await init_db()
     logger.info("Database ready.")
+
+    # Start background scheduler for auto-release payments (FR-64)
+    from app.tasks.auto_release import auto_release_loop
+    task = asyncio.create_task(auto_release_loop())
+
     yield
+
+    task.cancel()
     logger.info("Shutting down...")
 
 
@@ -90,4 +97,38 @@ async def health_check():
 # ── Routers ───────────────────────────────────────────────────────────────────
 API_PREFIX = "/api/v1"
 
+from app.routers import (  # noqa: E402
+    auth as auth_router,
+    categories as categories_router,
+    providers as providers_router,
+    services as services_router,
+    jobs as jobs_router,
+    bookings as bookings_router,
+    payments as payments_router,
+    admin as admin_router,
+    ai as ai_router,
+    chat as chat_router,
+    disputes as disputes_router,
+    favorites as favorites_router,
+    location as location_router,
+    reports as reports_router,
+)
+from app.routers.misc import reviews_router, notifications_router, users_router  # noqa: E402
+
 app.include_router(auth_router.router, prefix=API_PREFIX)
+app.include_router(categories_router.router, prefix=API_PREFIX)
+app.include_router(providers_router.router, prefix=API_PREFIX)
+app.include_router(services_router.router, prefix=API_PREFIX)
+app.include_router(jobs_router.router, prefix=API_PREFIX)
+app.include_router(bookings_router.router, prefix=API_PREFIX)
+app.include_router(payments_router.router, prefix=API_PREFIX)
+app.include_router(admin_router.router, prefix=API_PREFIX)
+app.include_router(reviews_router, prefix=API_PREFIX)
+app.include_router(notifications_router, prefix=API_PREFIX)
+app.include_router(users_router, prefix=API_PREFIX)
+app.include_router(ai_router.router, prefix=API_PREFIX)
+app.include_router(chat_router.router, prefix=API_PREFIX)
+app.include_router(disputes_router.router, prefix=API_PREFIX)
+app.include_router(favorites_router.router, prefix=API_PREFIX)
+app.include_router(location_router.router, prefix=API_PREFIX)
+app.include_router(reports_router.router, prefix=API_PREFIX)

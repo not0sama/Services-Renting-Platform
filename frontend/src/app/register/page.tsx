@@ -31,7 +31,10 @@ function RegisterForm() {
   // Pre-select role from URL param (?role=provider)
   useEffect(() => {
     const r = searchParams.get("role");
-    if (r === "provider") setRole("provider");
+    if (r === "provider") {
+      // Use setTimeout to avoid synchronous setState inside effect during render cycle
+      setTimeout(() => setRole("provider"), 0);
+    }
   }, [searchParams]);
 
   const updateField = (field: string, value: string | boolean) =>
@@ -106,7 +109,7 @@ function RegisterForm() {
               : [
                   "AI matches you with the best provider",
                   "Pay only when the job is done right",
-                  "Track your provider's live location",
+                  "Track your provider&apos;s live location",
                   "Protected by 72-hour escrow guarantee",
                 ]
             ).map((feat) => (

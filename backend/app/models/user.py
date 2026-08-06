@@ -32,8 +32,8 @@ class User(UserBase, table=True):
     password_hash: str
     password_reset_code: Optional[str] = Field(default=None)
     password_reset_expires: Optional[datetime] = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class Address(SQLModel, table=True):

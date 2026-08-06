@@ -8,7 +8,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
 };
 
 // Public routes that don't require auth
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/help"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/help", "/escrow-demo"];
 
 // Admin login is a special unlisted public route
 const ADMIN_LOGIN = "/admin/login";
