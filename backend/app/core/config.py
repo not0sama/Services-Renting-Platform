@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # AI — Google Gemini
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_API_KEY: str = "AIzaSyBkehNgBponQCJFrn-sKckFrASEDVksCWY"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # File Storage
     UPLOAD_DIR: str = "./uploads"

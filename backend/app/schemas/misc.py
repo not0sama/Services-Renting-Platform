@@ -76,6 +76,7 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     language_pref: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 
 class AddressCreate(BaseModel):
@@ -108,6 +109,8 @@ class UserAdminOut(BaseModel):
     phone: Optional[str]
     role: str
     is_active: bool
+    referral_code: Optional[str] = None
+    admin_permissions: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -117,7 +120,29 @@ class UserSuspend(BaseModel):
     reason: Optional[str] = None
 
 
+class UserAdminPermissionsUpdate(BaseModel):
+    admin_permissions: str
+
+
 class AnnouncementCreate(BaseModel):
     title: str
-    body: str
-    target_role: Optional[str] = None  # "customer", "provider", or None = all
+    message: str
+    target_role: Optional[str] = "all"  # "all", "customer", "provider"
+
+
+class AnnouncementOut(BaseModel):
+    id: int
+    title: str
+    message: str
+    target_role: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ReferralOut(BaseModel):
+    referral_code: str
+    referral_link: str
+    total_referred_users: int
+

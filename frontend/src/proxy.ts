@@ -27,8 +27,9 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if the user has an access token cookie
-  const hasToken = req.cookies.has("hrp_access_token");
+  // Check if the user has an access token or refresh token cookie
+  const hasToken =
+    req.cookies.has("hrp_access_token") || req.cookies.has("hrp_refresh_token");
 
   if (!hasToken) {
     const loginUrl = new URL("/login", req.url);

@@ -156,10 +156,10 @@ export default function JobOffersPage() {
                   </div>
                   
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">SAR {finalPrice.toFixed(0)}</div>
+                    <div className="text-2xl font-bold text-gray-900">LYD {finalPrice.toFixed(0)}</div>
                     {job.is_urgent && surchargePct > 0 && (
                       <div className="text-xs text-red-500 mt-0.5">
-                        Includes {surchargePct}% urgent premium (SAR {surchargeAmount.toFixed(0)})
+                        Includes {surchargePct}% urgent premium (LYD {surchargeAmount.toFixed(0)})
                       </div>
                     )}
                     <div className="flex items-center justify-end gap-1 text-sm text-gray-500 mt-1">

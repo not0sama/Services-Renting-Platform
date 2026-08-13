@@ -104,7 +104,7 @@ export default function AdminBookingsPage() {
                       "bg-amber-50 text-amber-700"
                     }`}>{b.status.replace("_", " ")}</span>
                   </td>
-                  <td className="px-5 py-3 text-sm font-semibold text-gray-900">SAR {b.price.toFixed(0)}</td>
+                  <td className="px-5 py-3 text-sm font-semibold text-gray-900">LYD {b.price.toFixed(0)}</td>
                   <td className="px-5 py-3">
                     {!["completed", "cancelled"].includes(b.status) && (
                       <button

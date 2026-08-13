@@ -155,7 +155,7 @@ function PostJobForm() {
         {/* Budget */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Budget Min (SAR)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Budget Min (LYD)</label>
             <input
               type="number"
               min="0"
@@ -166,7 +166,7 @@ function PostJobForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Budget Max (SAR)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Budget Max (LYD)</label>
             <input
               type="number"
               min="0"

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, update
 
 from app.core.deps import get_current_user, require_role
+from app.core.exceptions import AppException
 from app.db.session import get_session
 from app.models.notification import Notification
 from app.models.user import User, Address
@@ -51,6 +52,26 @@ async def get_provider_reviews(
     return [ReviewOut.model_validate(r) for r in reviews]
 
 
+@reviews_router.post("/{review_id}/flag", response_model=ReviewOut)
+async def flag_review(
+    review_id: int,
+    reason: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.review import Review
+    from fastapi import HTTPException
+    review = await db.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    review.is_flagged = True
+    review.flag_reason = reason or "Flagged by user"
+    db.add(review)
+    await db.commit()
+    await db.refresh(review)
+    return ReviewOut.model_validate(review)
+
+
 # ── Notifications ─────────────────────────────────────────────────────────────
 notifications_router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -85,7 +106,7 @@ async def mark_read(
     from datetime import datetime, timezone
     notif = await db.get(Notification, notification_id)
     if notif and notif.user_id == current_user.id:
-        notif.read_at = datetime.now(timezone.utc)
+        notif.read_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.add(notif)
         await db.commit()
     return {"ok": True}
@@ -104,7 +125,7 @@ async def mark_all_read(
         )
     )
     for n in result.scalars().all():
-        n.read_at = datetime.now(timezone.utc)
+        n.read_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.add(n)
     await db.commit()
     return {"ok": True}
@@ -123,6 +144,7 @@ async def get_profile(current_user: User = Depends(get_current_user)):
         "phone": current_user.phone,
         "role": current_user.role,
         "language_pref": current_user.language_pref,
+        "avatar_url": getattr(current_user, "avatar_url", None),
     }
 
 
@@ -132,14 +154,36 @@ async def update_profile(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    from datetime import datetime, timezone
-    for k, v in data.model_dump(exclude_none=True).items():
+    from datetime import datetime
+    for k, v in data.model_dump(exclude_unset=True).items():
         setattr(current_user, k, v)
-    current_user.updated_at = datetime.now(timezone.utc)
+    current_user.updated_at = datetime.utcnow()
     db.add(current_user)
+
+    # Sync avatar_url with ProviderProfile if user is provider
+    if data.avatar_url is not None and getattr(current_user, "role", None) and current_user.role.value == "provider":
+        from app.models.provider import ProviderProfile
+        res = await db.execute(select(ProviderProfile).where(ProviderProfile.user_id == current_user.id))
+        prof = res.scalars().first()
+        if prof:
+            prof.avatar_url = data.avatar_url
+            prof.updated_at = datetime.utcnow()
+            db.add(prof)
+
     await db.commit()
     await db.refresh(current_user)
-    return {"ok": True}
+    return {
+        "ok": True,
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "phone": current_user.phone,
+            "role": current_user.role,
+            "language_pref": current_user.language_pref,
+            "avatar_url": current_user.avatar_url,
+        }
+    }
 
 
 @users_router.get("/me/addresses", response_model=List[AddressOut])
@@ -176,6 +220,34 @@ async def add_address(
     return AddressOut.model_validate(address)
 
 
+@users_router.patch("/me/addresses/{address_id}", response_model=AddressOut)
+async def update_address(
+    address_id: int,
+    data: AddressCreate,
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    address = await db.get(Address, address_id)
+    if not address or address.user_id != current_user.id:
+        raise AppException(status.HTTP_404_NOT_FOUND, "ADDRESS_NOT_FOUND", "Address not found.")
+
+    if data.is_default:
+        result = await db.execute(
+            select(Address).where(Address.user_id == current_user.id, Address.is_default == True)
+        )
+        for a in result.scalars().all():
+            a.is_default = False
+            db.add(a)
+
+    for k, v in data.model_dump(exclude_none=True).items():
+        setattr(address, k, v)
+
+    db.add(address)
+    await db.commit()
+    await db.refresh(address)
+    return AddressOut.model_validate(address)
+
+
 @users_router.delete("/me/addresses/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_address(
     address_id: int,
@@ -186,3 +258,51 @@ async def delete_address(
     if address and address.user_id == current_user.id:
         await db.delete(address)
         await db.commit()
+
+
+@users_router.get("/me/referrals")
+async def get_referral_info(
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    from sqlmodel import func
+    from app.schemas.misc import ReferralOut
+    import secrets
+
+    if not current_user.referral_code:
+        current_user.referral_code = secrets.token_hex(4).upper()
+        db.add(current_user)
+        await db.commit()
+        await db.refresh(current_user)
+
+    count_stmt = select(func.count(User.id)).where(User.referred_by_id == current_user.id)
+    total_referred = (await db.execute(count_stmt)).scalar() or 0
+
+    return ReferralOut(
+        referral_code=current_user.referral_code,
+        referral_link=f"http://localhost:3000/register?ref={current_user.referral_code}",
+        total_referred_users=total_referred,
+    )
+
+
+# ── Platform Announcements (FR-55) ───────────────────────────────────────────
+announcements_router = APIRouter(prefix="/announcements", tags=["Announcements"])
+
+
+@announcements_router.get("")
+async def list_active_announcements(
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.announcement import Announcement
+    from app.schemas.misc import AnnouncementOut
+
+    stmt = select(Announcement).where(Announcement.is_active == True)
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+    filtered = [
+        a for a in items
+        if a.target_role.value in ["all", current_user.role.value]
+    ]
+    return [AnnouncementOut.model_validate(a) for a in filtered]
+

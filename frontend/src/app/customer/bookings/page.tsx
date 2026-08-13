@@ -79,7 +79,7 @@ function BookingCard({ booking }: { booking: Booking }) {
             {booking.booking_type}
           </span>
         </div>
-        <span className="font-semibold text-gray-900">SAR {booking.price.toFixed(0)}</span>
+        <span className="font-semibold text-gray-900">LYD {booking.price.toFixed(0)}</span>
       </div>
     </Link>
   );

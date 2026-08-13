@@ -89,7 +89,7 @@ export default function ProviderJobFeedPage() {
                 {job.budget_min && job.budget_max && (
                   <span className="flex items-center gap-1">
                     <DollarSign className="w-3.5 h-3.5" />
-                    SAR {job.budget_min}–{job.budget_max}
+                    LYD {job.budget_min}–{job.budget_max}
                   </span>
                 )}
                 {job.location_address && (

@@ -85,6 +85,16 @@ async def submit_offer(
     return OfferOut.model_validate(offer)
 
 
+@router.get("/offers/my", response_model=List[OfferOut], tags=["Jobs & Offers"])
+async def list_my_offers(
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_role("provider")),
+):
+    """List all offers submitted by the current provider."""
+    profile = await get_profile_by_user_id(db, current_user.id)
+    return await job_service.list_provider_offers(db, profile.id)
+
+
 @router.get("/jobs/{job_id}/offers", response_model=List[OfferOut])
 async def get_job_offers(
     job_id: int,

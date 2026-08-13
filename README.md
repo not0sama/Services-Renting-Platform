@@ -78,15 +78,15 @@ App available at: http://localhost:3000
 
 ## Demo Accounts
 
-Run the seed script (Phase 3) to get demo accounts:
+Run the seed script to populate test data:
 ```bash
-cd backend && python seed/seed.py
+cd backend && venv/bin/python -m app.seed
 ```
 
-Demo credentials (after seeding):
-- Customer: `customer@demo.com` / `Demo1234`
-- Provider: `provider@demo.com` / `Demo1234`  
-- Admin: `admin@demo.com` / `Demo1234`
+Demo credentials (all passwords: `password123`):
+- Customer: `customer@platform.com` (or `sara@hirerent.com`) / `password123`
+- Provider: `provider@platform.com` (Platinum tier) / `password123`  
+- Admin: `admin@platform.com` (Super Admin) / `password123`
 
 ---
 

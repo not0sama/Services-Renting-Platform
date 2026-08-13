@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.core.exceptions import AppException
+from app.models.provider import ProviderCategory
 from app.models.service import Service, Availability
 from app.models.booking import Booking, BookingStatus
 from app.schemas.service import ServiceCreate, ServiceUpdate, TimeSlot
@@ -21,6 +22,17 @@ async def create_service(db: AsyncSession, user_id: int, data: ServiceCreate) ->
     profile = await get_profile_by_user_id(db, user_id)
     svc = Service(provider_id=profile.id, **data.model_dump())
     db.add(svc)
+
+    # Auto-link category to ProviderCategory table if not present
+    res = await db.execute(
+        select(ProviderCategory).where(
+            ProviderCategory.provider_id == profile.id,
+            ProviderCategory.category_id == data.category_id
+        )
+    )
+    if not res.scalars().first():
+        db.add(ProviderCategory(provider_id=profile.id, category_id=data.category_id))
+
     await db.commit()
     await db.refresh(svc)
     return svc
@@ -33,12 +45,12 @@ async def get_service(db: AsyncSession, service_id: int) -> Service:
     return svc
 
 
-async def list_provider_services(db: AsyncSession, provider_id: int) -> List[Service]:
-    result = await db.execute(
-        select(Service)
-        .where(Service.provider_id == provider_id, Service.is_active == True)
-        .order_by(Service.id)
-    )
+async def list_provider_services(db: AsyncSession, provider_id: int, active_only: bool = True) -> List[Service]:
+    stmt = select(Service).where(Service.provider_id == provider_id)
+    if active_only:
+        stmt = stmt.where(Service.is_active == True)
+    stmt = stmt.order_by(Service.id)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
@@ -49,7 +61,7 @@ async def update_service(db: AsyncSession, user_id: int, service_id: int, data: 
         raise AppException(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "You do not own this service.")
     for k, v in data.model_dump(exclude_none=True).items():
         setattr(svc, k, v)
-    svc.updated_at = datetime.now(timezone.utc)
+    svc.updated_at = datetime.utcnow()
     db.add(svc)
     await db.commit()
     await db.refresh(svc)
@@ -62,7 +74,7 @@ async def delete_service(db: AsyncSession, user_id: int, service_id: int) -> Non
     if svc.provider_id != profile.id:
         raise AppException(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "You do not own this service.")
     svc.is_active = False
-    svc.updated_at = datetime.now(timezone.utc)
+    svc.updated_at = datetime.utcnow()
     db.add(svc)
     await db.commit()
 

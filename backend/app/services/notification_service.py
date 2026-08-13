@@ -24,7 +24,7 @@ async def emit(
         title=title,
         body=body,
         data=data or {},
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(n)
     await db.flush()

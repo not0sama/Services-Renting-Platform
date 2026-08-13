@@ -29,6 +29,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dir = "ltr";
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
+
   const setLanguage = (newLang: Language) => {
     setLangState(newLang);
     localStorage.setItem("hrp_lang", newLang);

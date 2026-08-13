@@ -18,7 +18,7 @@ from app.models.payment import Payment, PaymentStatus
 from app.models.provider import ProviderProfile
 from app.models.user import User
 from app.schemas.booking import InstantBookCreate, CancelBooking, RescheduleBooking
-from app.services import notification_service
+from app.services import notification_service, payment_service
 from app.services.provider_service import get_profile_by_user_id
 
 # Business rules
@@ -71,14 +71,16 @@ async def instant_book(
     if not svc or not svc.is_active:
         raise AppException(status.HTTP_404_NOT_FOUND, "SERVICE_NOT_FOUND", "Service not found or inactive.")
 
-    # Double-booking guard: check if slot is still free (FR-24)
-    end_dt = data.scheduled_datetime + timedelta(minutes=svc.duration_minutes)
+    # Convert input datetime to naive UTC for PostgreSQL TIMESTAMP WITHOUT TIME ZONE
+    sched_dt = data.scheduled_datetime.replace(tzinfo=None) if data.scheduled_datetime.tzinfo else data.scheduled_datetime
+    end_dt = sched_dt + timedelta(minutes=svc.duration_minutes)
+
     conflict = await db.execute(
         select(Booking).where(
             Booking.provider_id == svc.provider_id,
             Booking.status.in_([BookingStatus.confirmed, BookingStatus.en_route, BookingStatus.in_progress]),
             Booking.scheduled_datetime < end_dt,
-            Booking.scheduled_datetime >= data.scheduled_datetime,
+            Booking.scheduled_datetime >= sched_dt,
         )
     )
     if conflict.scalar_one_or_none():
@@ -96,19 +98,58 @@ async def instant_book(
         service_id=svc.id,
         title=svc.title,
         description=svc.description,
-        scheduled_datetime=data.scheduled_datetime,
+        scheduled_datetime=sched_dt,
         duration_minutes=svc.duration_minutes,
         price=svc.price,
         status=BookingStatus.pending,
         booking_type=BookingType.instant,
     )
     db.add(booking)
+    await db.commit()
+    await db.refresh(booking)
 
     # Notifications
     if provider_user_id:
-        await notification_service.booking_confirmed(db, customer_id, provider_user_id, 0, svc.title)
+        await notification_service.booking_confirmed(db, customer_id, provider_user_id, booking.id, svc.title)
 
+    return booking
+
+from app.schemas.booking import (
+    InstantBookCreate, CancelBooking, RescheduleBooking, DirectBookingCreate,
+)
+
+
+async def create_direct_booking(
+    db: AsyncSession,
+    customer_id: int,
+    data: DirectBookingCreate,
+) -> Booking:
+    provider_profile = await db.get(ProviderProfile, data.provider_profile_id)
+    if not provider_profile:
+        raise AppException(status.HTTP_404_NOT_FOUND, "PROVIDER_NOT_FOUND", "Provider not found.")
+
+    sched_dt = (data.scheduled_datetime or (datetime.now(timezone.utc) + timedelta(hours=1))).replace(tzinfo=None)
+
+    booking = Booking(
+        customer_id=customer_id,
+        provider_id=provider_profile.id,
+        provider_user_id=provider_profile.user_id,
+        category_id=data.category_id,
+        title=data.title,
+        description=data.description,
+        scheduled_datetime=sched_dt,
+        duration_minutes=60,
+        price=data.price,
+        status=BookingStatus.confirmed,
+        booking_type=data.booking_type,
+    )
+    db.add(booking)
     await db.commit()
+    await db.refresh(booking)
+
+    # Create held escrow payment automatically (FR-35, FR-63)
+    from app.schemas.payment import CheckoutCreate
+    await payment_service.checkout(db, customer_id, CheckoutCreate(booking_id=booking.id, payment_method="card"))
     await db.refresh(booking)
     return booking
 
@@ -397,7 +438,8 @@ async def cancel_booking(
     # Cancellation fee check
     refund_full = True
     if booking.scheduled_datetime:
-        hours_until = (booking.scheduled_datetime - datetime.now(timezone.utc)).total_seconds() / 3600
+        b_dt = booking.scheduled_datetime.replace(tzinfo=timezone.utc) if not booking.scheduled_datetime.tzinfo else booking.scheduled_datetime
+        hours_until = (b_dt - datetime.now(timezone.utc)).total_seconds() / 3600
         refund_full = hours_until >= CANCELLATION_FREE_HOURS
 
     # Update payment if exists
@@ -452,7 +494,8 @@ async def reschedule_booking(
     if booking.status not in [BookingStatus.pending, BookingStatus.confirmed]:
         raise AppException(status.HTTP_409_CONFLICT, "CANNOT_RESCHEDULE", "Booking cannot be rescheduled at this stage.")
 
-    booking.scheduled_datetime = data.new_datetime
+    sched_dt = data.new_datetime.replace(tzinfo=None) if data.new_datetime.tzinfo else data.new_datetime
+    booking.scheduled_datetime = sched_dt
     booking.updated_at = datetime.now(timezone.utc)
     # Reset to pending so provider re-confirms
     booking.status = BookingStatus.pending

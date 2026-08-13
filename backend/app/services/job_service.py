@@ -11,6 +11,7 @@ from sqlmodel import select, func
 from app.core.exceptions import AppException
 from app.models.job import JobRequest, Offer, JobStatus, OfferStatus
 from app.models.provider import ProviderProfile, ProviderCategory, VerificationStatus
+from app.models.service import Service
 from app.models.user import User
 from app.schemas.job import JobCreate, OfferCreate, OfferUpdate, OfferOut
 from app.services import notification_service
@@ -31,9 +32,14 @@ async def create_job(db: AsyncSession, customer_id: int, data: JobCreate) -> Job
     if data.is_urgent:
         job_data["urgent_surcharge_pct"] = URGENT_SURCHARGE_PCT
 
+    if job_data.get("scheduled_date") and getattr(job_data["scheduled_date"], "tzinfo", None):
+        job_data["scheduled_date"] = job_data["scheduled_date"].replace(tzinfo=None)
+
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=OFFER_EXPIRY_DAYS)).replace(tzinfo=None)
+
     job = JobRequest(
         customer_id=customer_id,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=OFFER_EXPIRY_DAYS),
+        expires_at=expires_at,
         **job_data,
     )
     db.add(job)
@@ -83,32 +89,42 @@ async def get_provider_job_feed(
     Job feed for providers — filtered by their category matches,
     service radius, and other optional filters (FR-15, FR-16).
     """
-    # Get provider's categories
+    # Get provider's categories from ProviderCategory
     cat_result = await db.execute(
         select(ProviderCategory.category_id)
         .where(ProviderCategory.provider_id == provider_profile_id)
     )
-    provider_cat_ids = [r[0] for r in cat_result.all()]
+    provider_cat_ids = set(r[0] for r in cat_result.all() if r[0] is not None)
 
-    if not provider_cat_ids:
-        return []
+    # Also include categories from provider's active services
+    svc_cat_result = await db.execute(
+        select(Service.category_id)
+        .where(Service.provider_id == provider_profile_id)
+    )
+    for r in svc_cat_result.all():
+        if r[0] is not None:
+            provider_cat_ids.add(r[0])
 
-    stmt = (
-        select(JobRequest)
-        .where(
-            JobRequest.status == JobStatus.open,
-            JobRequest.category_id.in_(provider_cat_ids),
-            JobRequest.expires_at > datetime.now(timezone.utc),
-        )
-        .order_by(JobRequest.is_urgent.desc(), JobRequest.created_at.desc())
-        .offset((page - 1) * limit)
-        .limit(limit)
+    now_naive = datetime.utcnow()
+
+    stmt = select(JobRequest).where(
+        JobRequest.status == JobStatus.open,
+        (JobRequest.expires_at > now_naive) | (JobRequest.expires_at == None),
     )
 
     if category_id:
         stmt = stmt.where(JobRequest.category_id == category_id)
+    elif provider_cat_ids:
+        stmt = stmt.where(JobRequest.category_id.in_(list(provider_cat_ids)))
+
     if is_urgent is not None:
         stmt = stmt.where(JobRequest.is_urgent == is_urgent)
+
+    stmt = (
+        stmt.order_by(JobRequest.is_urgent.desc(), JobRequest.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
 
     result = await db.execute(stmt)
     jobs = list(result.scalars().all())
@@ -270,7 +286,7 @@ async def update_offer(
 
     for k, v in update_data.items():
         setattr(offer, k, v)
-    offer.updated_at = datetime.now(timezone.utc)
+    offer.updated_at = datetime.utcnow()
     db.add(offer)
     await db.commit()
     await db.refresh(offer)
@@ -287,8 +303,27 @@ async def withdraw_offer(db: AsyncSession, provider_profile_id: int, offer_id: i
         raise AppException(status.HTTP_409_CONFLICT, "OFFER_NOT_WITHDRAWABLE", "Only pending offers can be withdrawn.")
 
     offer.status = OfferStatus.withdrawn
-    offer.updated_at = datetime.now(timezone.utc)
+    offer.updated_at = datetime.utcnow()
     db.add(offer)
     await db.commit()
     await db.refresh(offer)
     return offer
+
+
+async def list_provider_offers(db: AsyncSession, provider_profile_id: int) -> List[OfferOut]:
+    stmt = (
+        select(Offer, JobRequest)
+        .join(JobRequest, Offer.job_id == JobRequest.id)
+        .where(Offer.provider_id == provider_profile_id)
+        .order_by(Offer.submitted_at.desc())
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    outs = []
+    for offer, job in rows:
+        out = OfferOut.model_validate(offer)
+        out.job_title = job.title
+        out.job_status = job.status.value if hasattr(job.status, "value") else str(job.status)
+        outs.append(out)
+    return outs

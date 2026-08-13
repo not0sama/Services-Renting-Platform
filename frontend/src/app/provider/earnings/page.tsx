@@ -49,15 +49,15 @@ export default function EarningsPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-emerald-50 rounded-2xl p-4">
           <p className="text-xs font-medium text-emerald-700 mb-1">Released</p>
-          <p className="text-xl font-bold text-emerald-800">SAR {totalReleased.toFixed(0)}</p>
+          <p className="text-xl font-bold text-emerald-800">LYD {totalReleased.toFixed(0)}</p>
         </div>
         <div className="bg-amber-50 rounded-2xl p-4">
           <p className="text-xs font-medium text-amber-700 mb-1">Pending</p>
-          <p className="text-xl font-bold text-amber-800">SAR {totalPending.toFixed(0)}</p>
+          <p className="text-xl font-bold text-amber-800">LYD {totalPending.toFixed(0)}</p>
         </div>
         <div className="bg-gray-50 rounded-2xl p-4">
           <p className="text-xs font-medium text-gray-600 mb-1">Gross Total</p>
-          <p className="text-xl font-bold text-gray-800">SAR {totalGross.toFixed(0)}</p>
+          <p className="text-xl font-bold text-gray-800">LYD {totalGross.toFixed(0)}</p>
         </div>
       </div>
 
@@ -81,8 +81,8 @@ export default function EarningsPage() {
                 <p className="text-xs text-gray-400">{e.customer_name} · {new Date(e.created_at).toLocaleDateString()}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-sm font-bold text-gray-900">SAR {e.net_amount.toFixed(0)}</p>
-                <p className="text-xs text-gray-400 line-through">SAR {e.gross_amount.toFixed(0)}</p>
+                <p className="text-sm font-bold text-gray-900">LYD {e.net_amount.toFixed(0)}</p>
+                <p className="text-xs text-gray-400 line-through">LYD {e.gross_amount.toFixed(0)}</p>
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${STATUS_STYLES[e.status] ?? "bg-gray-50 text-gray-500"}`}>
                   {e.status.replace("_", " ")}
                 </span>

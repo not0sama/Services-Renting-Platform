@@ -116,7 +116,7 @@ export default function BookingDetailPage() {
           )}
           <div className="flex items-center gap-2 text-gray-600">
             <DollarSign className="w-4 h-4 text-violet-400" />
-            SAR {booking.price.toFixed(2)}
+            LYD {booking.price.toFixed(2)}
           </div>
           {booking.duration_minutes && (
             <div className="flex items-center gap-2 text-gray-600">

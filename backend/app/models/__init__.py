@@ -18,3 +18,4 @@ from app.models.audit import AuditLog, Favorite  # noqa: F401
 from app.models.dispute import Dispute, DisputeStatus  # noqa: F401
 from app.models.message import Message, ProviderLocation  # noqa: F401
 from app.models.report import Report, ReportStatus  # noqa: F401
+from app.models.announcement import Announcement, TargetRole  # noqa: F401

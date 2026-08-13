@@ -52,7 +52,7 @@ export default function SubmitOfferPage() {
         urgent_surcharge_pct: job?.is_urgent ? parseFloat(urgentSurcharge) : undefined,
       });
       setDone(true);
-      setTimeout(() => router.push("/provider/offers"), 1500);
+      setTimeout(() => router.push("/provider/jobs"), 1500);
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to submit offer.");
     } finally {
@@ -82,7 +82,7 @@ export default function SubmitOfferPage() {
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{job.description}</p>
           {job.budget_min && job.budget_max && (
             <p className="text-sm text-violet-700 font-medium mt-2">
-              Budget: SAR {job.budget_min}–{job.budget_max}
+              Budget: LYD {job.budget_min}–{job.budget_max}
             </p>
           )}
           {job.is_urgent && (
@@ -100,7 +100,7 @@ export default function SubmitOfferPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              <DollarSign className="w-4 h-4 inline mr-1" /> Your Price (SAR) *
+              <DollarSign className="w-4 h-4 inline mr-1" /> Your Price (LYD) *
             </label>
             <input
               type="number" required min="1"

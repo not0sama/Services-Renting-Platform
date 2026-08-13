@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, Package, DollarSign, Clock, ToggleLeft, ToggleRight } from "lucide-react";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface Service {
   id: number;
@@ -68,14 +69,24 @@ export default function ProviderServicesPage() {
   };
 
   const toggleActive = async (s: Service) => {
-    await api.patch(`/services/${s.id}`, { is_active: !s.is_active });
-    load();
+    try {
+      await api.patch(`/services/${s.id}`, { is_active: !s.is_active });
+      toast.success(s.is_active ? "Service deactivated" : "Service activated!");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to update service status.");
+    }
   };
 
   const remove = async (s: Service) => {
     if (!confirm("Delete this service?")) return;
-    await api.delete(`/services/${s.id}`);
-    load();
+    try {
+      await api.delete(`/services/${s.id}`);
+      toast.success("Service deleted successfully.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to delete service.");
+    }
   };
 
   const catName = (id: number) => categories.find(c => c.id === id)?.name_en ?? "—";
@@ -115,7 +126,7 @@ export default function ProviderServicesPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (SAR) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (LYD) *</label>
                   <input required type="number" min="0" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-300 text-sm" />
                 </div>
                 <div>
@@ -154,7 +165,7 @@ export default function ProviderServicesPage() {
                   <p className="text-xs text-violet-600 font-medium mt-0.5">{catName(s.category_id)}</p>
                   {s.description && <p className="text-sm text-gray-500 mt-1 line-clamp-1">{s.description}</p>}
                   <div className="flex items-center gap-4 mt-2 text-sm">
-                    <span className="flex items-center gap-1 text-gray-700 font-semibold"><DollarSign className="w-3.5 h-3.5 text-violet-500" />SAR {s.price.toFixed(0)}</span>
+                    <span className="flex items-center gap-1 text-gray-700 font-semibold"><DollarSign className="w-3.5 h-3.5 text-violet-500" />LYD {s.price.toFixed(0)}</span>
                     <span className="flex items-center gap-1 text-gray-500"><Clock className="w-3.5 h-3.5" />{s.duration_minutes} min</span>
                   </div>
                 </div>

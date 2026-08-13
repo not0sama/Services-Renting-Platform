@@ -171,7 +171,7 @@ export default function AIAssistResultPage() {
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Estimated Cost</p>
-            <p className="text-xl font-bold text-violet-600">SAR {result.cost_min}–{result.cost_max}</p>
+            <p className="text-xl font-bold text-violet-600">LYD {result.cost_min}–{result.cost_max}</p>
             <p className="text-xs text-gray-400">{result.duration_minutes} min est.</p>
           </div>
         </div>

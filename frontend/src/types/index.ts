@@ -41,6 +41,7 @@ export interface RegisterPayload {
   role: UserRole;
   language_pref: LanguagePref;
   accepted_terms: boolean;
+  referral_code?: string;
 }
 
 export interface LoginPayload {

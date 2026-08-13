@@ -47,9 +47,18 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
+cors_origins = settings.cors_origins_list
+if "http://127.0.0.1:3000" not in cors_origins:
+    cors_origins.append("http://127.0.0.1:3000")
+if "http://localhost:3001" not in cors_origins:
+    cors_origins.append("http://localhost:3001")
+if "http://127.0.0.1:3001" not in cors_origins:
+    cors_origins.append("http://127.0.0.1:3001")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -113,7 +122,7 @@ from app.routers import (  # noqa: E402
     location as location_router,
     reports as reports_router,
 )
-from app.routers.misc import reviews_router, notifications_router, users_router  # noqa: E402
+from app.routers.misc import reviews_router, notifications_router, users_router, announcements_router  # noqa: E402
 
 app.include_router(auth_router.router, prefix=API_PREFIX)
 app.include_router(categories_router.router, prefix=API_PREFIX)
@@ -126,6 +135,7 @@ app.include_router(admin_router.router, prefix=API_PREFIX)
 app.include_router(reviews_router, prefix=API_PREFIX)
 app.include_router(notifications_router, prefix=API_PREFIX)
 app.include_router(users_router, prefix=API_PREFIX)
+app.include_router(announcements_router, prefix=API_PREFIX)
 app.include_router(ai_router.router, prefix=API_PREFIX)
 app.include_router(chat_router.router, prefix=API_PREFIX)
 app.include_router(disputes_router.router, prefix=API_PREFIX)

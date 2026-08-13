@@ -80,7 +80,9 @@ class OfferOut(BaseModel):
     best_match_score: Optional[float]
     submitted_at: datetime
     expires_at: Optional[datetime]
-    # Enriched for comparison table
+    # Enriched for comparison table & provider offers view
+    job_title: Optional[str] = None
+    job_status: Optional[str] = None
     provider_name: Optional[str] = None
     provider_rating: Optional[float] = None
     provider_tier: Optional[str] = None

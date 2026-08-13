@@ -28,7 +28,10 @@ async def get_or_create_profile(db: AsyncSession, user_id: int) -> ProviderProfi
     )
     profile = result.scalar_one_or_none()
     if not profile:
-        profile = ProviderProfile(user_id=user_id)
+        from app.models.user import User as UserModel
+        user = await db.get(UserModel, user_id)
+        avatar = getattr(user, "avatar_url", None) if user else None
+        profile = ProviderProfile(user_id=user_id, avatar_url=avatar)
         db.add(profile)
         await db.commit()
         await db.refresh(profile)
@@ -43,13 +46,7 @@ async def get_profile_by_id(db: AsyncSession, profile_id: int) -> ProviderProfil
 
 
 async def get_profile_by_user_id(db: AsyncSession, user_id: int) -> ProviderProfile:
-    result = await db.execute(
-        select(ProviderProfile).where(ProviderProfile.user_id == user_id)
-    )
-    p = result.scalar_one_or_none()
-    if not p:
-        raise AppException(status.HTTP_404_NOT_FOUND, "PROVIDER_NOT_FOUND", "Provider profile not found.")
-    return p
+    return await get_or_create_profile(db, user_id)
 
 
 # ── Onboarding Steps (FR-6) ───────────────────────────────────────────────────

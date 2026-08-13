@@ -35,7 +35,7 @@ async def list_my_services(
     current_user: User = Depends(require_role("provider")),
 ):
     profile = await get_profile_by_user_id(db, current_user.id)
-    services = await service_service.list_provider_services(db, profile.id)
+    services = await service_service.list_provider_services(db, profile.id, active_only=False)
     return [ServiceOut.model_validate(s) for s in services]
 
 
@@ -45,7 +45,7 @@ async def list_provider_services(
     db: AsyncSession = Depends(get_session),
     _: User = Depends(get_current_user),
 ):
-    services = await service_service.list_provider_services(db, provider_id)
+    services = await service_service.list_provider_services(db, provider_id, active_only=True)
     return [ServiceOut.model_validate(s) for s in services]
 
 

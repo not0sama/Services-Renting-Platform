@@ -21,6 +21,7 @@ from app.models.job import JobRequest, Offer, JobStatus, OfferStatus
 from app.models.booking import Booking, BookingStatus, BookingType
 from app.models.payment import Payment, PaymentStatus
 from app.models.review import Review
+from app.models.audit import Favorite, AuditLog
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ async def seed():
     async with AsyncSession(engine, expire_on_commit=False) as db:
         logger.info("Cleaning old demo data if exists...")
         # Clear tables in reverse dependency order
-        for model in [Review, Payment, Booking, Offer, JobRequest, Service, ProviderCategory, ProviderProfile, Category, User]:
+        for model in [Review, Favorite, AuditLog, Payment, Booking, Offer, JobRequest, Service, ProviderCategory, ProviderProfile, Category, User]:
             await db.execute(delete(model))
         await db.commit()
 
@@ -44,12 +45,22 @@ async def seed():
             role=UserRole.admin,
             phone="+966500000000",
             is_active=True,
-            is_verified=True,
+            accepted_terms=True,
         )
-        db.add(admin)
+        admin_platform = User(
+            email="admin@platform.com",
+            password_hash=hashed_password,
+            name="Platform Admin",
+            role=UserRole.admin,
+            phone="+966500000001",
+            is_active=True,
+            accepted_terms=True,
+        )
+        db.add_all([admin, admin_platform])
 
         # 2. Customers
         customers_data = [
+          ("Test Customer", "customer@platform.com", "+966500000002"),
           ("Sara Al-Mansoor", "sara@hirerent.com", "+966501111111"),
           ("Ahmed Hassan", "ahmed@hirerent.com", "+966502222222"),
           ("Khaled Omar", "khaled@hirerent.com", "+966503333333"),
@@ -100,7 +111,7 @@ async def seed():
 
         # 4. Providers
         providers_meta = [
-            ("Apex Plumbing & Leak Detection", "pro1@hirerent.com", ProviderTier.platinum, 92.5, 4.9, 120, 24.6488, 46.7108),
+            ("Apex Plumbing & Leak Detection", "provider@platform.com", ProviderTier.platinum, 92.5, 4.9, 120, 24.6488, 46.7108),
             ("Voltage Pro Electricals", "pro2@hirerent.com", ProviderTier.gold, 78.0, 4.7, 85, 24.7136, 46.6753),
             ("SparkleClean Home Services", "pro3@hirerent.com", ProviderTier.gold, 74.2, 4.8, 64, 24.6892, 46.7219),
             ("CoolBreeze AC & HVAC Techs", "pro4@hirerent.com", ProviderTier.silver, 62.5, 4.5, 42, 24.7743, 46.7386),

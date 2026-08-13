@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { User, Save, Loader2, ToggleLeft, ToggleRight } from "lucide-react";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface Profile {
   id: number;
@@ -70,8 +71,14 @@ export default function ProviderProfilePage() {
 
   const toggleOnline = async () => {
     const newStatus = !profile?.is_online;
-    await api.patch("/providers/me/online-status", { is_online: newStatus });
-    setProfile(p => p ? { ...p, is_online: newStatus } : p);
+    try {
+      await api.patch("/providers/me/online-status", { is_online: newStatus });
+      setProfile((p) => (p ? { ...p, is_online: newStatus } : p));
+      toast.success(newStatus ? "You are now Online!" : "You are now Offline.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || "Failed to update online status. Ensure you are logged in as a provider.";
+      toast.error(msg);
+    }
   };
 
   if (loading) return <div className="max-w-2xl mx-auto px-4 py-8"><div className="h-96 bg-gray-100 rounded-2xl animate-pulse" /></div>;

@@ -89,7 +89,7 @@ const en = {
     instantBookBadge: "Instant Book",
     instantBookTitle: "Browse & Book Now",
     instantBookSub: "Fixed-price listings · Instant confirmation",
-    instantBookFrom: "from SAR 120",
+    instantBookFrom: "from LYD 120",
     instantBookBtn: "Book slot",
     orBadge: "OR",
     customQuoteBadge: "Custom Quote",

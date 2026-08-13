@@ -68,7 +68,7 @@ function EscrowDemoContent() {
             </div>
             <div className="text-right flex-shrink-0">
               <span className="data-value text-xl font-700" style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--color-ink)" }}>
-                SAR 280.00
+                LYD 280.00
               </span>
               <p className="text-[11px]" style={{ color: "var(--color-trust)", fontWeight: 600 }}>
                 {t.escrow.demoEscrowHeld}

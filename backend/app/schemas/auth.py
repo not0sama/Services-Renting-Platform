@@ -13,6 +13,7 @@ class RegisterRequest(BaseModel):
     role: UserRole
     language_pref: LanguagePref = LanguagePref.en
     accepted_terms: bool
+    referral_code: Optional[str] = None
 
     @field_validator("accepted_terms")
     @classmethod
@@ -52,6 +53,7 @@ class UserPublic(BaseModel):
     language_pref: LanguagePref
     is_active: bool
     accepted_terms: bool
+    referral_code: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

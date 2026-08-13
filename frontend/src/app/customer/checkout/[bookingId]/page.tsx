@@ -80,14 +80,14 @@ export default function CheckoutPage() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-700">
             <span className="truncate pr-2">{booking.title}</span>
-            <span className="font-medium">SAR {booking.price.toFixed(2)}</span>
+            <span className="font-medium">LYD {booking.price.toFixed(2)}</span>
           </div>
           {booking.provider_name && (
             <p className="text-xs text-gray-400">by {booking.provider_name}</p>
           )}
           <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-gray-900">
             <span>Total (held in escrow)</span>
-            <span>SAR {total.toFixed(2)}</span>
+            <span>LYD {total.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function CheckoutPage() {
           </div>
 
           <button type="submit" disabled={paying} className="w-full btn-primary py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-base">
-            {paying ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : <>Pay SAR {total.toFixed(2)}</>}
+            {paying ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : <>Pay LYD {total.toFixed(2)}</>}
           </button>
         </form>
       </div>

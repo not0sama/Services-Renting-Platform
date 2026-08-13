@@ -28,8 +28,8 @@ A customer will describe their problem in natural language.
 You must respond with ONLY a valid JSON object matching this exact schema:
 {{
   "category_slug": "<one of the category slugs above>",
-  "cost_min": <integer SAR>,
-  "cost_max": <integer SAR>,
+  "cost_min": <integer LYD>,
+  "cost_max": <integer LYD>,
   "duration_minutes": <integer>,
   "structured_description": "<clean, professional rewrite of the problem in English>",
   "confidence": <float 0.0-1.0>
@@ -38,7 +38,7 @@ You must respond with ONLY a valid JSON object matching this exact schema:
 Rules:
 - Pick the single most specific matching category slug.
 - If no category matches well, pick the closest and set confidence < 0.5.
-- cost_min and cost_max should reflect realistic Saudi market prices in SAR.
+- cost_min and cost_max should reflect realistic Saudi market prices in LYD.
 - duration_minutes is the expected service duration.
 - structured_description should be professional and concise (max 200 chars).
 - Return ONLY the JSON object, no markdown, no explanation."""

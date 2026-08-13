@@ -410,6 +410,16 @@ textarea.input { resize: vertical; line-height: 1.55; }
   outline-color: var(--color-ink);
 }
 
+/* ── Floating Deck Keyframes ────────────────────────────────────── */
+@keyframes floatDeck {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+.animate-float-deck {
+  animation: floatDeck 4.5s ease-in-out infinite;
+}
+
 /* ── prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   /* Zero all CSS transitions */

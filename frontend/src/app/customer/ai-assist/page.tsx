@@ -207,7 +207,7 @@ export default function AIAssistPage() {
           >
             {[
               { label: isAr ? "الفئة المكتشفة" : "Detected category", sub: isAr ? "سباكة، كهرباء..." : "Plumbing, Electrical…" },
-              { label: isAr ? "تقدير التكلفة" : "Cost estimate", sub: isAr ? "نطاق بالريال السعودي" : "SAR min–max range" },
+              { label: isAr ? "تقدير التكلفة" : "Cost estimate", sub: isAr ? "نطاق بالريال السعودي" : "LYD min–max range" },
               { label: isAr ? "أفضل 3 محترفين" : "Top 3 providers", sub: isAr ? "السعر · المسافة · المستوى" : "Price · distance · tier" },
             ].map((item) => (
               <div

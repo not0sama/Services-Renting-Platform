@@ -21,6 +21,7 @@ function RegisterForm() {
     name: "",
     email: "",
     phone: "",
+    referralCode: "",
     password: "",
     confirmPassword: "",
     accepted_terms: false,
@@ -28,12 +29,15 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Pre-select role from URL param (?role=provider)
+  // Pre-select role or referral code from URL params
   useEffect(() => {
     const r = searchParams.get("role");
+    const ref = searchParams.get("ref");
     if (r === "provider") {
-      // Use setTimeout to avoid synchronous setState inside effect during render cycle
       setTimeout(() => setRole("provider"), 0);
+    }
+    if (ref) {
+      setTimeout(() => setForm((prev) => ({ ...prev, referralCode: ref })), 0);
     }
   }, [searchParams]);
 
@@ -61,6 +65,7 @@ function RegisterForm() {
         role,
         language_pref: "en",
         accepted_terms: form.accepted_terms,
+        referral_code: form.referralCode || undefined,
       });
       toast.success("Account created! Welcome to HireRent 🎉");
     } catch (err) {
@@ -75,30 +80,33 @@ function RegisterForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel — Brand */}
-      <div className="hidden lg:flex lg:w-5/12 gradient-primary relative overflow-hidden flex-col justify-between p-12">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-white blur-3xl" />
-        </div>
+      {/* Left Panel — High-Contrast Brand Panel */}
+      <div
+        className="hidden lg:flex lg:w-5/12 relative overflow-hidden flex-col justify-between p-12 text-white"
+        style={{
+          background: "linear-gradient(135deg, #0F172A 0%, #1E1B4B 60%, #0F172A 100%)",
+        }}
+      >
+        <div className="absolute top-10 right-10 w-96 h-96 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-indigo-600/15 blur-3xl pointer-events-none" />
 
-        <div className="relative flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+        <div className="relative flex items-center gap-3 z-10">
+          <div className="w-10 h-10 rounded-xl bg-[var(--color-signal)] flex items-center justify-center text-white shadow-lg">
+            <Zap className="w-5 h-5 fill-white" />
           </div>
-          <span className="font-display font-bold text-2xl text-white">HireRent</span>
+          <span className="font-display font-bold text-2xl text-white tracking-tight">HireRent</span>
         </div>
 
-        <div className="relative">
-          <h2 className="font-display text-4xl font-extrabold text-white leading-tight mb-4">
+        <div className="relative z-10 my-auto py-8">
+          <h2 className="font-display text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight">
             {role === "provider" ? "Start earning today" : "Get any job done right"}
           </h2>
-          <p className="text-white/75 text-lg leading-relaxed mb-8">
+          <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8">
             {role === "provider"
               ? "Join our marketplace, showcase your skills, and connect with customers who need your expertise."
               : "Find verified professionals, compare offers, and book with confidence — backed by our escrow guarantee."}
           </p>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3.5">
             {(role === "provider"
               ? [
                   "Set your own rates and availability",
@@ -109,20 +117,20 @@ function RegisterForm() {
               : [
                   "AI matches you with the best provider",
                   "Pay only when the job is done right",
-                  "Track your provider&apos;s live location",
+                  "Track your provider's live location",
                   "Protected by 72-hour escrow guarantee",
                 ]
             ).map((feat) => (
-              <div key={feat} className="flex items-center gap-3 text-white/80 text-sm">
-                <CheckCircle className="w-4.5 h-4.5 text-white/60 shrink-0" />
-                {feat}
+              <div key={feat} className="flex items-center gap-3 text-slate-200 text-sm font-medium">
+                <CheckCircle className="w-4.5 h-4.5 text-blue-400 shrink-0" />
+                <span>{feat}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative text-white/50 text-xs">
-          © {new Date().getFullYear()} HireRent
+        <div className="relative z-10 text-slate-400 text-xs font-mono">
+          © {new Date().getFullYear()} HireRent Platform. All rights reserved.
         </div>
       </div>
 
@@ -226,6 +234,24 @@ function RegisterForm() {
                   onChange={(e) => updateField("phone", e.target.value)}
                   placeholder="+1 234 567 8900"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Referral Code */}
+            <div>
+              <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Referral code <span className="text-gray-400 font-normal">(optional - FR-58)</span>
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  id="referralCode"
+                  type="text"
+                  value={form.referralCode}
+                  onChange={(e) => updateField("referralCode", e.target.value.toUpperCase())}
+                  placeholder="e.g. A1B2C3D4"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent uppercase"
                 />
               </div>
             </div>

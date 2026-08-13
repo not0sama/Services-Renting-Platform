@@ -45,6 +45,19 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> User:
             "Password must be at least 8 characters with 1 uppercase letter and 1 number."
         )
 
+    # Handle optional referral code
+    referred_by_id: Optional[int] = None
+    if data.referral_code:
+        ref_user = (await session.exec(
+            select(User).where(User.referral_code == data.referral_code.strip().upper())
+        )).first()
+        if ref_user:
+            referred_by_id = ref_user.id
+
+    # Generate unique referral code for the new user
+    import secrets
+    my_ref_code = secrets.token_hex(4).upper()
+
     user = User(
         name=data.name,
         email=data.email,
@@ -53,11 +66,18 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> User:
         language_pref=data.language_pref,
         password_hash=hash_password(data.password),
         accepted_terms=data.accepted_terms,
+        referral_code=my_ref_code,
+        referred_by_id=referred_by_id,
         is_active=True,
     )
     session.add(user)
     await session.flush()  # get the id before commit
-    logger.info(f"New {data.role.value} registered: {data.email} (id={user.id})")
+
+    if data.role.value == "provider":
+        from app.services.provider_service import get_or_create_profile
+        await get_or_create_profile(session, user.id)
+
+    logger.info(f"New {data.role.value} registered: {data.email} (id={user.id}, ref={my_ref_code})")
     return user
 
 

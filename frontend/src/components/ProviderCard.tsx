@@ -82,25 +82,29 @@ export function ProviderCard({
           <p className="text-xs text-gray-500 line-clamp-2 mb-3">{bio}</p>
         )}
 
-        {/* Stats row */}
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1 text-amber-600">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="font-semibold">{avgRating.toFixed(1)}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-500">
-            <CheckCircle className="w-3.5 h-3.5" />
-            <span>{completedJobs} jobs</span>
-          </div>
-          {city && (
-            <div className="flex items-center gap-1 text-gray-500">
-              <MapPin className="w-3.5 h-3.5" />
-              <span className="truncate">{city}</span>
+        {/* Stats & Booking Action Row */}
+        <div className="pt-3.5 border-t border-gray-100 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 font-bold text-gray-900">
+              <Star className="w-3.5 h-3.5 fill-[var(--color-ai-bright)] text-[var(--color-ai-bright)]" />
+              <span>{avgRating.toFixed(1)}</span>
             </div>
-          )}
-          {distanceKm !== undefined && (
-            <span className="text-violet-600 font-medium ml-auto">{distanceKm.toFixed(1)} km</span>
-          )}
+            <div className="flex items-center gap-1 text-gray-500">
+              <CheckCircle className="w-3.5 h-3.5 text-[var(--color-trust)]" />
+              <span>{completedJobs} jobs</span>
+            </div>
+            {city && (
+              <div className="hidden sm:flex items-center gap-1 text-gray-500">
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="truncate">{city}</span>
+              </div>
+            )}
+          </div>
+
+          <span className="btn-primary" style={{ padding: "6px 14px", fontSize: "12px", borderRadius: "var(--radius-md)" }}>
+            <Zap className="w-3.5 h-3.5 fill-white" />
+            <span>Book Service</span>
+          </span>
         </div>
       </div>
     </Link>

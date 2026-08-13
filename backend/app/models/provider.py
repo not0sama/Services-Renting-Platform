@@ -66,7 +66,7 @@ class ProviderProfile(SQLModel, table=True):
     total_jobs_on_time: int = Field(default=0, ge=0)
 
     # Profile image
-    avatar_url: Optional[str] = Field(default=None, max_length=500)
+    avatar_url: Optional[str] = Field(default=None)
     profile_images: Optional[Any] = Field(default=None, sa_column=Column(JSON))  # list of URLs
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

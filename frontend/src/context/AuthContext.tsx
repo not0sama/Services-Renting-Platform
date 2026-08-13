@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // On mount: if we have a token, fetch the current user
+  // On mount: if we have tokens (access or refresh token), restore user session
   useEffect(() => {
     const initAuth = async () => {
       if (!authStorage.hasTokens()) {
@@ -49,8 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await api.get<User>("/auth/me");
         setUser(res.data);
+        // Persist role cookie to sync with proxy middleware
+        authStorage.setTokens(
+          authStorage.getAccessToken() || "",
+          authStorage.getRefreshToken() || "",
+          res.data.role
+        );
       } catch {
         authStorage.clearTokens();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -60,8 +67,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (payload: LoginPayload) => {
     const res = await api.post<TokenResponse>("/auth/login", payload);
-    authStorage.setTokens(res.data.access_token, res.data.refresh_token);
+    authStorage.setTokens(
+      res.data.access_token,
+      res.data.refresh_token,
+      res.data.user.role
+    );
     setUser(res.data.user);
+
+    // Redirect to requested page if 'from' is present, otherwise to role dashboard
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const from = urlParams.get("from");
+      if (from && from.startsWith("/")) {
+        router.push(from);
+        return;
+      }
+    }
+
     if (res.data.user.role === "customer") router.push("/customer");
     else if (res.data.user.role === "provider") router.push("/provider");
     else if (res.data.user.role === "admin") router.push("/admin");
@@ -69,8 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await api.post<TokenResponse>("/auth/register", payload);
-    authStorage.setTokens(res.data.access_token, res.data.refresh_token);
+    authStorage.setTokens(
+      res.data.access_token,
+      res.data.refresh_token,
+      res.data.user.role
+    );
     setUser(res.data.user);
+
     if (res.data.user.role === "customer") router.push("/customer");
     else if (res.data.user.role === "provider") router.push("/provider");
     else if (res.data.user.role === "admin") router.push("/admin");

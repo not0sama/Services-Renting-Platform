@@ -94,7 +94,7 @@ function ActiveBookingsContent() {
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                   {scheduledDate && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{scheduledDate}</span>}
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{b.duration_minutes} min</span>
-                  <span className="font-semibold text-gray-900 ml-auto">SAR {b.price.toFixed(0)}</span>
+                  <span className="font-semibold text-gray-900 ml-auto">LYD {b.price.toFixed(0)}</span>
                 </div>
 
                 {action && (

@@ -23,6 +23,10 @@ class UserBase(SQLModel):
     language_pref: LanguagePref = Field(default=LanguagePref.en)
     is_active: bool = Field(default=True)
     accepted_terms: bool = Field(default=False)
+    referral_code: Optional[str] = Field(default=None, index=True, max_length=20)
+    referred_by_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    admin_permissions: Optional[str] = Field(default=None, max_length=500)
+    avatar_url: Optional[str] = Field(default=None)
 
 
 class User(UserBase, table=True):
@@ -46,4 +50,4 @@ class Address(SQLModel, table=True):
     latitude: Optional[float] = Field(default=None)
     longitude: Optional[float] = Field(default=None)
     is_default: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.utcnow)

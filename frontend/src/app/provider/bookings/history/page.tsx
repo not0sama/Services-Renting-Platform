@@ -58,7 +58,7 @@ export default function BookingHistoryPage() {
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="font-semibold text-gray-900 text-sm">SAR {b.price.toFixed(0)}</p>
+                <p className="font-semibold text-gray-900 text-sm">LYD {b.price.toFixed(0)}</p>
                 <span className="text-xs text-emerald-600 font-medium">Completed</span>
               </div>
             </div>

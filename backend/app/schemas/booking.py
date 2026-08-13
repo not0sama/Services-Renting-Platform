@@ -13,6 +13,17 @@ class InstantBookCreate(BaseModel):
     longitude: Optional[float] = None
 
 
+class DirectBookingCreate(BaseModel):
+    """Customer books a provider directly from AI Assist or Profile."""
+    provider_profile_id: int
+    category_id: int
+    title: str
+    description: Optional[str] = None
+    booking_type: BookingType = BookingType.instant
+    price: float
+    scheduled_datetime: Optional[datetime] = None
+
+
 class BookingStatusUpdate(BaseModel):
     """Provider changes booking status (FR-29)."""
     status: BookingStatus

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ProviderCardStack from "@/components/ProviderCardStack";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   ShieldCheck,
@@ -9,8 +10,6 @@ import {
   Sparkles,
   ArrowRight,
   Star,
-  MapPin,
-  Clock,
   Wrench,
   Home,
   Scissors,
@@ -21,6 +20,7 @@ import {
   Camera,
   ChevronRight,
   MessageSquare,
+  Users,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -42,18 +42,18 @@ export default function LandingPage() {
   const trustPoints = [
     {
       icon: ShieldCheck,
-      label: isAr ? "محمي بالضمان" : "Escrow-protected",
-      text: isAr ? "يتم الاحتفاظ بمبلغك بعد العمل. تطلقه — أو تفتح نزاعاً — قبل تحرك أي أموال." : "Your payment is held after the job. You release it — or dispute — before any money moves.",
+      label: isAr ? "حساب ضمان محمي (Escrow)" : "Escrow-Protected Payments",
+      text: isAr ? "تظل أموالك آمنة في الضمان ولا تُطلق للمحترف إلا بعد إتمام العمل ورضاك التام." : "Your payment is held securely in escrow and released only after the job is completed to your satisfaction.",
     },
     {
-      icon: Star,
-      label: isAr ? "مستويات سمعة موثقة" : "Verified reputation tiers",
-      text: isAr ? "يحصل كل محترف على درجة ثقة مبنية على البيانات. المستويات البرونزية، الفضية، والذهبية واضحة على كل بطاقة." : "Every provider earns a data-driven Trust Score. Bronze, Silver, Gold, and Platinum tiers are visible on every card.",
+      icon: Users,
+      label: isAr ? "محترفون معتمدون ومقيمون" : "Verified & Rated Providers",
+      text: isAr ? "خضع كل محترف للتحقق الإداري والتقييم الحقيقي من مستخدمين سابقين." : "Every provider is identity-verified with transparent ratings and job completion history.",
     },
     {
       icon: Sparkles,
-      label: isAr ? "مطابقة الذكاء الاصطناعي" : "AI Smart Matching",
-      text: isAr ? "صف مشكلتك بلغة بسيطة. يحدد الذكاء الاصطناعي الخدمة، يقدر التكلفة، ويعرض أفضل 3 محترفين." : "Describe your problem in plain language. The AI identifies the service, estimates cost, and surfaces the top 3 providers.",
+      label: isAr ? "مطابقة ذكية بالذكاء الاصطناعي" : "AI Smart Matching",
+      text: isAr ? "صف مشكلتك بلغة بسيطة ليقوم الذكاء الاصطناعي بتحديد الخدمة واقتراح أفضل الخيارات." : "Describe your problem in plain words, and our AI will recommend the top matched specialists.",
     },
   ];
 
@@ -62,402 +62,242 @@ export default function LandingPage() {
       className="min-h-screen flex flex-col"
       style={{ background: "var(--color-canvas)", color: "var(--color-ink)" }}
     >
-      {/* ── Navbar ─────────────────────────────────────────────── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
-          {/* Wordmark */}
-          <Link href="/" className="flex items-center gap-2" style={{ textDecoration: "none" }}>
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: "var(--color-signal)" }}
-            >
-              <Zap className="w-4 h-4 text-white" />
+      {/* ── Header Navbar ────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-16">
+          {/* Brand Wordmark */}
+          <Link href="/" className="flex items-center gap-2.5" style={{ textDecoration: "none" }}>
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-signal)] flex items-center justify-center text-white">
+              <Zap className="w-4 h-4" />
             </div>
-            <span
-              className="font-display font-700 text-base tracking-tight"
-              style={{ color: "var(--color-ink)", fontWeight: 700 }}
-            >
+            <span className="font-display font-bold text-lg text-[var(--color-ink)]">
               {t.appName}
             </span>
           </Link>
 
-          {/* Nav links */}
-          <nav
-            className="hidden md:flex items-center gap-7 text-sm font-medium"
-            style={{ color: "var(--color-ink-soft)" }}
-          >
-            <a
-              href="#how-it-works"
-              className="hover:text-[var(--color-ink)] transition-colors"
-              style={{ textDecoration: "none" }}
-            >
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--color-ink-soft)]">
+            <a href="#how-it-works" className="hover:text-[var(--color-ink)] transition-colors">
               {t.nav.howItWorks}
             </a>
-            <Link
-              href="/customer/categories"
-              className="hover:text-[var(--color-ink)] transition-colors"
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
+            <Link href="/customer/categories" className="hover:text-[var(--color-ink)] transition-colors">
               {t.nav.browseServices}
             </Link>
-            <Link
-              href="/customer/ai-assist"
-              className="flex items-center gap-1.5"
-              style={{
-                textDecoration: "none",
-                color: "var(--color-ai)",
-                fontWeight: 600,
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
+            <Link href="/customer/ai-assist" className="hover:text-[var(--color-ink)] transition-colors">
               {t.nav.aiAssist}
             </Link>
           </nav>
 
-          {/* Auth & Language */}
+          {/* Auth Controls */}
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <Link
               href="/login"
-              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-gray-100"
-              style={{ textDecoration: "none", color: "var(--color-ink-soft)" }}
+              className="text-sm font-medium px-3.5 py-2 rounded-lg text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] transition-colors"
             >
               {t.nav.login}
             </Link>
-            <Link href="/register" className="btn-primary" style={{ padding: "8px 16px", fontSize: "13px" }}>
-              {t.nav.register} <ArrowRight className="w-3.5 h-3.5" />
+            <Link href="/register" className="btn-primary" style={{ padding: "8px 18px", fontSize: "14px" }}>
+              <span>{t.nav.register}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
       </header>
 
-      {/* ── Hero — split composition ─────────────────────────── */}
-      <section className="pt-14 min-h-screen flex items-center" style={{ background: "var(--color-canvas)" }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full py-20">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+      {/* ── Hero Section (Aligned Grid Architecture) ─────────────── */}
+      <section className="pt-24 pb-16 flex items-center" style={{ background: "var(--color-canvas)" }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
+          {/* 2-Column Grid with align-items: start */}
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
-            {/* Left: headline + search + CTA */}
-            <div className="lg:col-span-6 xl:col-span-7">
-              {/* AI strip */}
-              <Link
-                href="/customer/ai-assist"
-                className="inline-flex items-center gap-2 mb-8 group"
-                style={{ textDecoration: "none" }}
-              >
-                <span
-                  className="badge badge-ai"
-                  style={{ gap: 5 }}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  {isAr ? "المساعد الذكي" : "AI Smart Assist"}
-                </span>
-                <span
-                  className="text-xs font-medium transition-colors"
-                  style={{ color: "var(--color-ink-muted)" }}
-                >
-                  {isAr ? "صف مشكلتك ← مطابقة فورية" : "Describe your problem → instant match"}
-                </span>
-                <ChevronRight
-                  className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
-                  style={{ color: "var(--color-ink-muted)" }}
-                />
-              </Link>
-
-              {/* Headline */}
-              <h1
-                className="font-display leading-tight mb-5"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 800,
-                  fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
-                  letterSpacing: "-0.03em",
-                  color: "var(--color-ink)",
-                  lineHeight: 1.12,
-                  textAlign: isAr ? "right" : "left",
-                }}
-              >
-                {isAr ? (
-                  <>
-                    {t.landing.heroTitleLine1}
-                    <br />
-                    <span style={{ color: "var(--color-signal)" }}>{t.landing.heroTitlePricedFairly}</span>
-                    <br />
-                    {t.landing.heroTitleLine3}
-                  </>
-                ) : (
-                  <>
-                    The professional
-                    <br />
-                    you need,{" "}
-                    <span style={{ color: "var(--color-signal)" }}>priced fairly</span>
-                    <br />
-                    and paid safely.
-                  </>
-                )}
-              </h1>
-
-              <p
-                className="text-base leading-relaxed mb-8 max-w-md"
-                style={{ color: "var(--color-ink-soft)", textAlign: isAr ? "right" : "left" }}
-              >
-                {t.landing.heroSubtitle}
-              </p>
-
-              {/* Dual-Path Chooser — Signature Split-Panel Card */}
-              <div className="dual-path-card mb-8 max-w-xl">
-                {/* Left Side: Instant Book */}
-                <Link
-                  href="/customer/categories"
-                  className="dual-path-side side-instant group"
-                  aria-label="Instant Book"
-                >
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="badge badge-signal">
-                        <Zap className="w-3 h-3" />
-                        {t.landing.instantBookBadge}
-                      </span>
-                    </div>
-                    <p className="font-display text-base font-700 leading-snug mb-1" style={{ color: "var(--color-ink)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
-                      {t.landing.instantBookTitle}
-                    </p>
-                    <p className="text-xs mb-3" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
-                      {t.landing.instantBookSub}
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-[var(--color-border)] flex items-center justify-between">
-                    <span className="data-value text-xs font-600" style={{ color: "var(--color-signal)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                      {t.landing.instantBookFrom}
-                    </span>
-                    <span className="text-xs font-semibold flex items-center gap-1 text-[var(--color-signal)] group-hover:translate-x-0.5 transition-transform">
-                      {t.landing.instantBookBtn} <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-
-                {/* Central Divider */}
-                <div className="dual-path-divider">
-                  <span className="dual-path-or-badge">{t.landing.orBadge}</span>
-                </div>
-
-                {/* Right Side: Custom Quote */}
-                <Link
-                  href="/customer/jobs/new"
-                  className="dual-path-side side-quote group"
-                  aria-label="Custom Quote"
-                >
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="badge badge-neutral">
-                        <MessageSquare className="w-3 h-3" />
-                        {t.landing.customQuoteBadge}
-                      </span>
-                    </div>
-                    <p className="font-display text-base font-700 leading-snug mb-1" style={{ color: "var(--color-ink)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
-                      {t.landing.customQuoteTitle}
-                    </p>
-                    <p className="text-xs mb-3" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
-                      {t.landing.customQuoteSub}
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-[var(--color-border)] flex items-center justify-between">
-                    <span className="data-value text-xs font-600" style={{ color: "var(--color-ink-soft)", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                      {t.landing.customQuoteBids}
-                    </span>
-                    <span className="text-xs font-semibold flex items-center gap-1 text-[var(--color-ink)] group-hover:translate-x-0.5 transition-transform">
-                      {t.landing.customQuoteBtn} <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              </div>
-
-              {/* Trust signals */}
-              <div className="flex flex-wrap gap-4">
-                <span
-                  className="flex items-center gap-1.5 text-xs font-medium"
-                  style={{ color: "var(--color-ink-muted)" }}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--color-trust)" }} />
-                  <span>{t.landing.escrowProtected}</span>
-                </span>
-                <span
-                  className="flex items-center gap-1.5 text-xs font-medium"
-                  style={{ color: "var(--color-ink-muted)" }}
-                >
-                  <Star className="w-3.5 h-3.5" style={{ color: "var(--color-ai-bright)" }} />
-                  <span>{t.landing.verifiedTrustTiers}</span>
-                </span>
-                <span
-                  className="flex items-center gap-1.5 text-xs font-medium"
-                  style={{ color: "var(--color-ink-muted)" }}
-                >
-                  <MapPin className="w-3.5 h-3.5" style={{ color: "var(--color-signal)" }} />
-                  <span>{t.landing.nearYouNow}</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Right: social proof column */}
-            <div className="lg:col-span-6 xl:col-span-5 hidden lg:block">
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {[
-                  { value: "10,000+", label: t.landing.statProvidersLabel },
-                  { value: "50,000+", label: t.landing.statJobsLabel },
-                  { value: "4.9 / 5", label: t.landing.statRatingLabel },
-                  { value: "100%", label: t.landing.statEscrowLabel },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="card p-5"
-                  >
-                    <div
-                      className="data-value text-2xl font-600 mb-0.5"
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        color: "var(--color-ink)",
-                      }}
-                    >
-                      {s.value}
-                    </div>
-                    <div
-                      className="text-xs"
-                      style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}
-                    >
-                      {s.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sample provider card — shows the product UI inline */}
-              <div
-                className="card p-5"
-                style={{ border: "1px solid var(--color-border)" }}
-              >
-                <div
-                  className="text-xs font-medium uppercase tracking-wider mb-3"
-                  style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}
-                >
-                  {t.landing.exampleHeader}
-                </div>
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                    style={{ background: "var(--color-signal)" }}
-                  >
-                    AK
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-600" style={{ fontWeight: 600 }}>Ahmad Al-Karimi</span>
-                      <span className="badge tier-gold">{t.landing.goldTier}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs mb-2" style={{ color: "var(--color-ink-muted)" }}>
-                      <span className="flex items-center gap-1"><Star className="w-3 h-3" style={{ color: "var(--color-ai-bright)" }} /> 4.92</span>
-                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 2.1 km</span>
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t.landing.eta30min}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="badge badge-trust"
-                        style={{ gap: 4 }}
-                      >
-                        <ShieldCheck className="w-3 h-3" />
-                        {t.landing.verifiedBadge}
-                      </span>
-                      <span
-                        className="badge badge-ai"
-                        style={{ gap: 4 }}
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        {t.landing.aiBestMatchBadge}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div
-                      className="data-value text-sm font-600 mb-1"
-                      style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--color-ink)" }}
-                    >
-                      SAR 280
-                    </div>
-                    <button className="btn-primary" style={{ padding: "6px 14px", fontSize: "12px" }}>
-                      {t.landing.bookBtn}
-                    </button>
-                  </div>
-                </div>
-                <div
-                  className="mt-3 pt-3 text-xs"
-                  style={{
-                    borderTop: "1px solid var(--color-border)",
-                    color: "var(--color-ink-muted)",
-                  }}
-                >
-                  <span className="flex items-center gap-1" style={{ textAlign: isAr ? "right" : "left" }}>
-                    <ShieldCheck className="w-3 h-3 flex-shrink-0" style={{ color: "var(--color-trust)" }} />
-                    {t.landing.escrowNote}
+            {/* Left Column (6 cols): Shared Structure */}
+            <div className="lg:col-span-6 text-start flex flex-col justify-between h-full">
+              <div>
+                {/* Row 1: Shared Eyebrow Header Height (h-7) */}
+                <div className="h-7 flex items-center mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
+                    {isAr ? "منصة الخدمات الموثوقة" : "VERIFIED SERVICE MARKETPLACE"}
                   </span>
                 </div>
+
+                {/* Row 2: Headline & Subtitle */}
+                <h1
+                  className="font-display text-start font-bold mb-4"
+                  style={{
+                    fontSize: "clamp(2.2rem, 4.2vw, 3.3rem)",
+                    letterSpacing: "-0.03em",
+                    color: "var(--color-ink)",
+                    lineHeight: 1.15,
+                  }}
+                >
+                  {isAr ? (
+                    <>
+                      احجز أفضل المحترفين
+                      <br />
+                      <span style={{ color: "var(--color-signal)" }}>بأسعار عادلة</span> ودفع محمي.
+                    </>
+                  ) : (
+                    <>
+                      The professionals you need,
+                      <br />
+                      <span style={{ color: "var(--color-signal)" }}>priced fairly</span> and paid safely.
+                    </>
+                  )}
+                </h1>
+
+                <p className="text-sm sm:text-base text-[var(--color-ink-soft)] max-w-lg mb-6 text-start leading-relaxed">
+                  {isAr
+                    ? "احجز خدمات فورية أو اطلب عروض أسعار خاصة من محترفين معتمدين مع ضمان حساب الإسكرو."
+                    : "Book fixed-price service slots instantly or request custom bids from verified professionals with escrow protection."}
+                </p>
+              </div>
+
+              {/* Row 3: Dual CTA Cards Block */}
+              <div>
+                <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                  {/* CTA Card A: Instant Book */}
+                  <Link
+                    href="/customer/categories"
+                    className="bg-white p-5 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-signal)] transition-all hover:shadow-md group text-start flex flex-col justify-between min-h-[140px]"
+                  >
+                    <div>
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-[var(--color-ink)] mb-3 group-hover:bg-[var(--color-signal)] group-hover:text-white transition-colors">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <h2 className="font-display font-bold text-base text-[var(--color-ink)] mb-1">
+                        {isAr ? "حجز فوري" : "Instant Book"}
+                      </h2>
+                      <p className="text-xs text-[var(--color-ink-muted)]">
+                        {isAr ? "خدمات مسبقة السعر وتأكيد مباشر" : "Fixed-price services with instant confirmation"}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-[var(--color-signal)]">
+                      <span>{isAr ? "تصفح الخدمات" : "Browse Services"}</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+
+                  {/* CTA Card B: Post a Job */}
+                  <Link
+                    href="/customer/jobs/new"
+                    className="bg-white p-5 rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-ink)] transition-all hover:shadow-md group text-start flex flex-col justify-between min-h-[140px]"
+                  >
+                    <div>
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-[var(--color-ink)] mb-3 group-hover:bg-[var(--color-ink)] group-hover:text-white transition-colors">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <h2 className="font-display font-bold text-base text-[var(--color-ink)] mb-1">
+                        {isAr ? "طلب عروض أسعار" : "Post a Job"}
+                      </h2>
+                      <p className="text-xs text-[var(--color-ink-muted)]">
+                        {isAr ? "صف طلبك وقارن عروض المحترفين" : "Request custom quotes & compare bids"}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-[var(--color-ink)]">
+                      <span>{isAr ? "اطلب عرض سعر" : "Request Bids"}</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Sub-Link: AI Smart Assist Trigger */}
+                <div className="text-start">
+                  <Link
+                    href="/customer/ai-assist"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:text-[var(--color-signal)] transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--color-signal)]" />
+                    <span>{isAr ? "غير متأكد مما تحتاجه؟ استعن بمساعد الذكاء الاصطناعي ←" : "Not sure what you need? Try AI Smart Assist →"}</span>
+                  </Link>
+                </div>
               </div>
             </div>
 
+            {/* Right Column (6 cols): Provider Card Stack Centered */}
+            <div className="lg:col-span-6 hidden lg:flex flex-col items-center justify-center">
+              <ProviderCardStack />
+            </div>
+
+          </div>
+
+          {/* Integrated Stats Bar: Snaps to max-w-7xl Grid Edges */}
+          <div className="mt-12 pt-8 border-t border-[var(--color-border)] grid grid-cols-3 gap-6 items-center">
+            {/* Stat 1: Left Edge Aligned */}
+            <div className="text-start">
+              <div className="data-value text-xl sm:text-2xl font-bold text-[var(--color-ink)] font-mono">
+                10,000+
+              </div>
+              <div className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                {isAr ? "محترف موثق" : "Verified Providers"}
+              </div>
+            </div>
+
+            {/* Stat 2: Center Aligned */}
+            <div className="text-center">
+              <div className="data-value text-xl sm:text-2xl font-bold text-[var(--color-ink)] font-mono flex items-center justify-center gap-1">
+                4.9 <Star className="w-4 h-4 fill-[var(--color-ink)] text-[var(--color-ink)]" />
+              </div>
+              <div className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                {isAr ? "متوسط التقييمات" : "Average Rating"}
+              </div>
+            </div>
+
+            {/* Stat 3: Right Edge Aligned */}
+            <div className="text-end">
+              <div className="data-value text-xl sm:text-2xl font-bold text-[var(--color-trust)] font-mono flex items-center justify-end gap-1">
+                100% <ShieldCheck className="w-4 h-4 text-[var(--color-trust)]" />
+              </div>
+              <div className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                {isAr ? "ضمان مالي (Escrow)" : "Escrow Protected"}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Categories Grid Section ─────────────────────────── */}
-      <section className="py-20 bg-white border-t border-[var(--color-border)]">
+      <section className="py-16 bg-white border-t border-[var(--color-border)]">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
             <div>
-              <h2 className="font-display text-2xl font-800 tracking-tight mb-2" style={{ fontFamily: "var(--font-display)", fontWeight: 800, textAlign: isAr ? "right" : "left" }}>
-                {isAr ? "استكشف الفئات" : "Explore Categories"}
+              <h2 className="font-display text-2xl font-bold tracking-tight mb-1 text-start">
+                {isAr ? "فئات الخدمات" : "Explore Categories"}
               </h2>
-              <p className="text-sm" style={{ color: "var(--color-ink-muted)", textAlign: isAr ? "right" : "left" }}>
-                {isAr ? "احجز محترفين معتمدين في كل مجال" : "Book verified professionals across all major service categories"}
+              <p className="text-sm text-[var(--color-ink-muted)] text-start">
+                {isAr ? "تصفح المحترفين والخدمات عبر التخصصات الأساسية" : "Book verified professionals across all core service categories"}
               </p>
             </div>
             <Link
               href="/customer/categories"
-              className="mt-4 sm:mt-0 text-sm font-semibold flex items-center gap-1 text-[var(--color-signal)]"
-              style={{ textDecoration: "none" }}
+              className="mt-3 sm:mt-0 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-signal)] hover:underline"
             >
-              {t.common.viewAll} <ChevronRight className="w-4 h-4" />
+              {isAr ? "جميع الفئات" : "View all categories"} <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-4">
-            {categories.map((c) => {
-              const Icon = c.icon;
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+            {categories.map((cat) => {
+              const IconComp = cat.icon;
               return (
                 <Link
-                  key={c.slug}
-                  href={`/customer/categories/${c.slug}`}
-                  className="card p-4 flex flex-col items-center text-center card-hover group"
-                  style={{ textDecoration: "none" }}
+                  key={cat.slug}
+                  href={`/customer/categories/${cat.slug}`}
+                  className="bg-white p-5 rounded-xl border border-[var(--color-border)] flex items-start gap-4 group hover:border-[var(--color-signal)] transition-all text-start"
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
-                    style={{ background: "var(--color-signal-light)", color: "var(--color-signal)" }}
-                  >
-                    <Icon className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 text-[var(--color-ink)] flex items-center justify-center flex-shrink-0 group-hover:bg-[var(--color-signal)] group-hover:text-white transition-colors">
+                    <IconComp className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xs font-600 mb-1" style={{ color: "var(--color-ink)", fontWeight: 600 }}>
-                    {c.label}
-                  </h3>
-                  <span className="text-[10px]" style={{ color: "var(--color-ink-muted)" }}>
-                    {c.count}
-                  </span>
+                  <div>
+                    <h3 className="font-display font-semibold text-sm mb-0.5 text-[var(--color-ink)] group-hover:text-[var(--color-signal)] transition-colors">
+                      {cat.label}
+                    </h3>
+                    <p className="text-xs text-[var(--color-ink-muted)]">
+                      {cat.count}
+                    </p>
+                  </div>
                 </Link>
               );
             })}
@@ -465,37 +305,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works Section ───────────────────────────── */}
-      <section id="how-it-works" className="py-20" style={{ background: "var(--color-canvas)" }}>
+      {/* ── Trust Pillars Section ────────────────────────────── */}
+      <section className="py-16 border-t border-[var(--color-border)]" style={{ background: "var(--color-canvas)" }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="font-display text-3xl font-800 tracking-tight mb-3" style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}>
-              {t.landing.howItWorksTitle}
-            </h2>
-            <p className="text-sm" style={{ color: "var(--color-ink-soft)" }}>
-              {isAr ? "ثلاث خطوات بسيطة لحصولك على الخدمة بأمان وشفافية كاملة" : "Three simple steps to getting work done with complete security and transparency"}
-            </p>
-          </div>
-
           <div className="grid md:grid-cols-3 gap-8">
-            {trustPoints.map((item, idx) => {
-              const Icon = item.icon;
+            {trustPoints.map((tp, idx) => {
+              const IconComponent = tp.icon;
               return (
-                <div key={idx} className="card p-8 flex flex-col items-start relative">
-                  <span
-                    className="data-value text-3xl font-800 mb-4"
-                    style={{ fontFamily: "var(--font-mono)", color: "var(--color-signal)", fontWeight: 800 }}
-                  >
-                    0{idx + 1}
-                  </span>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon className="w-5 h-5" style={{ color: "var(--color-signal)" }} />
-                    <h3 className="font-display text-lg font-700" style={{ fontFamily: "var(--font-display)", fontWeight: 700, textAlign: isAr ? "right" : "left" }}>
-                      {item.label}
-                    </h3>
+                <div key={idx} className="bg-white p-6 rounded-2xl border border-[var(--color-border)] text-start">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 text-[var(--color-ink)] flex items-center justify-center mb-4">
+                    <IconComponent className="w-5 h-5" />
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--color-ink-soft)", textAlign: isAr ? "right" : "left" }}>
-                    {item.text}
+                  <h3 className="font-display text-base font-bold text-[var(--color-ink)] mb-2">
+                    {tp.label}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+                    {tp.text}
                   </p>
                 </div>
               );
@@ -504,6 +329,58 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── How It Works ─────────────────────────────────────── */}
+      <section id="how-it-works" className="py-16 bg-white border-t border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <h2 className="font-display text-2xl font-bold tracking-tight mb-2">
+              {t.landing.howItWorksTitle}
+            </h2>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {isAr ? "3 خطوات بسيطة لإنجاز عملك بأمان وكفاءة" : "3 simple steps to getting your job done safely and efficiently"}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { num: "01", title: t.landing.step1Title, desc: t.landing.step1Desc },
+              { num: "02", title: t.landing.step2Title, desc: t.landing.step2Desc },
+              { num: "03", title: t.landing.step3Title, desc: t.landing.step3Desc },
+            ].map((step, index) => (
+              <div key={index} className="text-start">
+                <div className="data-value text-3xl font-bold text-[var(--color-signal)] mb-2 font-mono">
+                  {step.num}
+                </div>
+                <h3 className="font-display text-base font-bold text-[var(--color-ink)] mb-1">
+                  {step.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="border-t border-[var(--color-border)] py-8 bg-white mt-auto">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--color-ink-muted)]">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-[var(--color-signal)] flex items-center justify-center text-white">
+              <Zap className="w-3 h-3" />
+            </div>
+            <span className="font-display font-bold text-sm text-[var(--color-ink)]">
+              {t.appName}
+            </span>
+            <span>— {t.tagline}</span>
+          </div>
+
+          <div>
+            © {new Date().getFullYear()} {t.appName}. {isAr ? "جميع الحقوق محفوظة." : "All rights reserved."}
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

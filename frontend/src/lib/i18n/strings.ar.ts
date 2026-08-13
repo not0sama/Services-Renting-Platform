@@ -87,7 +87,7 @@ const ar: Strings = {
     instantBookBadge: "حجز فوري",
     instantBookTitle: "تصفح واحجز الآن",
     instantBookSub: "خدمات بأسعار محددة · تأكيد فوري",
-    instantBookFrom: "من SAR 120",
+    instantBookFrom: "من LYD 120",
     instantBookBtn: "احجز موعداً",
     orBadge: "أو",
     customQuoteBadge: "طلب سعر خاص",

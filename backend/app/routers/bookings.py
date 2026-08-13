@@ -9,13 +9,25 @@ from app.db.session import get_session
 from app.models.booking import BookingStatus
 from app.models.user import User
 from app.schemas.booking import (
-    InstantBookCreate, BookingStatusUpdate, CancelBooking,
+    InstantBookCreate, DirectBookingCreate, BookingStatusUpdate, CancelBooking,
     RescheduleBooking, BookingOut,
 )
 from app.services import booking_service, payment_service
 from app.schemas.payment import PaymentOut
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
+
+
+@router.post("", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=BookingOut, status_code=status.HTTP_201_CREATED, include_in_schema=False)
+async def create_direct_booking(
+    data: DirectBookingCreate,
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_role("customer")),
+):
+    """Customer books a provider directly from AI Assist or Profile."""
+    booking = await booking_service.create_direct_booking(db, current_user.id, data)
+    return BookingOut.model_validate(booking)
 
 
 @router.post("/instant", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
