@@ -69,8 +69,11 @@ async def offer_decision(db: AsyncSession, provider_id: int, offer_id: int, acce
 
 
 async def review_received(db: AsyncSession, provider_id: int, booking_id: int, rating: int):
+    from app.models.provider import ProviderProfile
+    profile = await db.get(ProviderProfile, provider_id)
+    user_id = profile.user_id if profile else provider_id
     stars = "⭐" * rating
-    await emit(db, provider_id, NotificationType.review_received,
+    await emit(db, user_id, NotificationType.review_received,
                "New Review Received", f"You received a {rating}-star review {stars}",
                {"booking_id": booking_id})
 

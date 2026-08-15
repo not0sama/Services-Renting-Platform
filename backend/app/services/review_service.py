@@ -76,7 +76,7 @@ async def _recalculate_avg_rating(db: AsyncSession, provider_id: int) -> None:
     profile = await db.get(ProviderProfile, provider_id)
     if profile:
         profile.avg_rating = round(float(avg or 0), 2)
-        profile.updated_at = datetime.now(timezone.utc)
+        profile.updated_at = datetime.utcnow()
         db.add(profile)
 
 
@@ -102,7 +102,7 @@ async def add_provider_response(
         raise AppException(status.HTTP_409_CONFLICT, "ALREADY_RESPONDED", "You have already responded to this review.")
 
     review.provider_response = response_text
-    review.responded_at = datetime.now(timezone.utc)
+    review.responded_at = datetime.utcnow()
     db.add(review)
     await db.commit()
     await db.refresh(review)

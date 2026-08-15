@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl">
           <div className="flex items-center gap-2 mb-6 text-amber-400 text-xs font-medium">
             <Shield className="w-4 h-4" />
-            Secure admin portal — this URL is not publicly listed
+            <span>Secure admin portal — this URL is not publicly listed</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

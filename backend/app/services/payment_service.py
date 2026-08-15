@@ -68,6 +68,7 @@ async def checkout(db: AsyncSession, customer_id: int, data: CheckoutCreate) -> 
     commission_amount = round(gross * commission_pct / 100, 2)
     net_amount = round(gross - commission_amount, 2)
 
+    pay_method = data.payment_method or booking.payment_method or "card"
     payment = Payment(
         booking_id=booking.id,
         customer_id=customer_id,
@@ -77,13 +78,14 @@ async def checkout(db: AsyncSession, customer_id: int, data: CheckoutCreate) -> 
         commission_amount=commission_amount,
         net_amount=net_amount,
         status=PaymentStatus.held,
+        payment_method=pay_method,
     )
     db.add(payment)
 
-    # Update booking to confirmed if still pending
+    booking.payment_method = pay_method
     if booking.status == BookingStatus.pending:
         booking.status = BookingStatus.confirmed
-        booking.updated_at = datetime.now(timezone.utc)
+        booking.updated_at = datetime.utcnow()
         db.add(booking)
 
     # Audit log (NFR-13)
@@ -111,8 +113,8 @@ async def release_payment(db: AsyncSession, booking_id: int, customer_id: int) -
         raise AppException(status.HTTP_409_CONFLICT, "NOT_HELD", "Payment is not in escrow.")
 
     payment.status = PaymentStatus.released
-    payment.released_at = datetime.now(timezone.utc)
-    payment.updated_at = datetime.now(timezone.utc)
+    payment.released_at = datetime.utcnow()
+    payment.updated_at = datetime.utcnow()
     db.add(payment)
 
     db.add(AuditLog(

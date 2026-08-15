@@ -90,6 +90,9 @@ async def instant_book(
     provider_profile = await db.get(ProviderProfile, svc.provider_id)
     provider_user_id = provider_profile.user_id if provider_profile else None
 
+    pay_method = data.payment_method or "card"
+    b_status = BookingStatus.confirmed if pay_method in ["cash", "transfer"] else BookingStatus.pending
+
     booking = Booking(
         customer_id=customer_id,
         provider_id=svc.provider_id,
@@ -98,15 +101,27 @@ async def instant_book(
         service_id=svc.id,
         title=svc.title,
         description=svc.description,
+        location_address=data.location_address,
+        latitude=data.latitude,
+        longitude=data.longitude,
         scheduled_datetime=sched_dt,
         duration_minutes=svc.duration_minutes,
         price=svc.price,
-        status=BookingStatus.pending,
+        status=b_status,
         booking_type=BookingType.instant,
+        payment_method=pay_method,
     )
     db.add(booking)
     await db.commit()
     await db.refresh(booking)
+
+    if pay_method in ["cash", "transfer"]:
+        from app.schemas.payment import CheckoutCreate
+        try:
+            await payment_service.checkout(db, customer_id, CheckoutCreate(booking_id=booking.id, payment_method=pay_method))
+            await db.refresh(booking)
+        except Exception:
+            pass
 
     # Notifications
     if provider_user_id:
@@ -128,7 +143,8 @@ async def create_direct_booking(
     if not provider_profile:
         raise AppException(status.HTTP_404_NOT_FOUND, "PROVIDER_NOT_FOUND", "Provider not found.")
 
-    sched_dt = (data.scheduled_datetime or (datetime.now(timezone.utc) + timedelta(hours=1))).replace(tzinfo=None)
+    sched_dt = (data.scheduled_datetime or (datetime.utcnow() + timedelta(hours=1))).replace(tzinfo=None)
+    pay_method = data.payment_method or "card"
 
     booking = Booking(
         customer_id=customer_id,
@@ -142,15 +158,19 @@ async def create_direct_booking(
         price=data.price,
         status=BookingStatus.confirmed,
         booking_type=data.booking_type,
+        payment_method=pay_method,
     )
     db.add(booking)
     await db.commit()
     await db.refresh(booking)
 
-    # Create held escrow payment automatically (FR-35, FR-63)
+    # Create escrow / payment record automatically
     from app.schemas.payment import CheckoutCreate
-    await payment_service.checkout(db, customer_id, CheckoutCreate(booking_id=booking.id, payment_method="card"))
-    await db.refresh(booking)
+    try:
+        await payment_service.checkout(db, customer_id, CheckoutCreate(booking_id=booking.id, payment_method=pay_method))
+        await db.refresh(booking)
+    except Exception:
+        pass
     return booking
 
 
@@ -161,6 +181,7 @@ async def accept_offer_create_booking(
     customer_id: int,
     job_id: int,
     offer_id: int,
+    payment_method: str = "card",
 ) -> Booking:
     from app.models.job import JobRequest, Offer, OfferStatus, JobStatus
     job = await db.get(JobRequest, job_id)
@@ -185,6 +206,9 @@ async def accept_offer_create_booking(
         surcharge = offer.price * (offer.urgent_surcharge_pct / 100.0)
         final_price = round(offer.price + surcharge, 2)
 
+    pay_method = payment_method or "card"
+    b_status = BookingStatus.confirmed
+
     # Create booking
     booking = Booking(
         customer_id=customer_id,
@@ -194,17 +218,21 @@ async def accept_offer_create_booking(
         job_offer_id=offer.id,
         title=job.title,
         description=job.description,
+        location_address=job.location_address,
+        latitude=job.latitude,
+        longitude=job.longitude,
         scheduled_datetime=job.scheduled_date,
         duration_minutes=offer.duration_minutes,
         price=final_price,
-        status=BookingStatus.confirmed,
+        status=b_status,
         booking_type=BookingType.quote,
+        payment_method=pay_method,
     )
     db.add(booking)
 
     # Accept this offer
     offer.status = OfferStatus.accepted
-    offer.updated_at = datetime.now(timezone.utc)
+    offer.updated_at = datetime.utcnow()
     db.add(offer)
 
     # Decline all other pending offers on this job
@@ -217,7 +245,7 @@ async def accept_offer_create_booking(
     )
     for o in others.scalars().all():
         o.status = OfferStatus.declined
-        o.updated_at = datetime.now(timezone.utc)
+        o.updated_at = datetime.utcnow()
         db.add(o)
         provider = await db.get(ProviderProfile, o.provider_id)
         if provider:
@@ -225,7 +253,7 @@ async def accept_offer_create_booking(
 
     # Close the job
     job.status = JobStatus.accepted
-    job.updated_at = datetime.now(timezone.utc)
+    job.updated_at = datetime.utcnow()
     db.add(job)
 
     # Notify accepted provider
@@ -234,6 +262,16 @@ async def accept_offer_create_booking(
 
     await db.commit()
     await db.refresh(booking)
+
+    # If cash or transfer, process checkout immediately so booking is ready
+    if pay_method in ["cash", "transfer"]:
+        from app.schemas.payment import CheckoutCreate
+        try:
+            await payment_service.checkout(db, customer_id, CheckoutCreate(booking_id=booking.id, payment_method=pay_method))
+            await db.refresh(booking)
+        except Exception:
+            pass
+
     return booking
 
 
@@ -268,12 +306,12 @@ async def update_status(
         )
 
     booking.status = new_status
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
 
     # On completion: set auto_release_at timer (FR-64)
     if new_status == BookingStatus.completed:
         hours = getattr(settings, "AUTO_RELEASE_HOURS", 72)
-        booking.auto_release_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+        booking.auto_release_at = datetime.utcnow() + timedelta(hours=hours)
 
         # Update provider completion metrics
         await _increment_completion_metrics(db, booking.provider_id)
@@ -305,7 +343,7 @@ async def _increment_completion_metrics(db: AsyncSession, provider_id: int) -> N
         profile.completion_rate = round(
             profile.completed_jobs_count / profile.total_jobs_accepted, 4
         )
-    profile.updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
 
 
@@ -333,7 +371,7 @@ async def request_revision(
     booking.revision_notes = notes
     booking.revision_count += 1
     booking.auto_release_at = None  # Pause auto-release timer while under revision
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
     db.add(booking)
 
     # Update payment to pause auto-release
@@ -384,11 +422,11 @@ async def resubmit_complete(
         )
 
     hours = getattr(settings, "AUTO_RELEASE_HOURS", 72)
-    new_release_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+    new_release_at = datetime.utcnow() + timedelta(hours=hours)
 
     booking.status = BookingStatus.completed
     booking.auto_release_at = new_release_at
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
     db.add(booking)
 
     # Reset payment auto_release_at
@@ -419,7 +457,7 @@ async def cancel_booking(
     booking_id: int,
     actor_user_id: int,
     actor_role: str,
-    data: CancelBooking,
+    data: Optional[CancelBooking] = None,
 ) -> Booking:
     booking = await get_booking(db, booking_id)
 
@@ -438,8 +476,8 @@ async def cancel_booking(
     # Cancellation fee check
     refund_full = True
     if booking.scheduled_datetime:
-        b_dt = booking.scheduled_datetime.replace(tzinfo=timezone.utc) if not booking.scheduled_datetime.tzinfo else booking.scheduled_datetime
-        hours_until = (b_dt - datetime.now(timezone.utc)).total_seconds() / 3600
+        b_dt = booking.scheduled_datetime.replace(tzinfo=None)
+        hours_until = (b_dt - datetime.utcnow()).total_seconds() / 3600
         refund_full = hours_until >= CANCELLATION_FREE_HOURS
 
     # Update payment if exists
@@ -447,8 +485,8 @@ async def cancel_booking(
     payment = pay_result.scalar_one_or_none()
     if payment and payment.status == PaymentStatus.held:
         payment.status = PaymentStatus.refunded
-        payment.released_at = datetime.now(timezone.utc)
-        payment.updated_at = datetime.now(timezone.utc)
+        payment.released_at = datetime.utcnow()
+        payment.updated_at = datetime.utcnow()
         db.add(payment)
 
     # Track cancellation metric
@@ -456,9 +494,9 @@ async def cancel_booking(
         await _increment_cancellation_metrics(db, booking.provider_id)
 
     booking.status = BookingStatus.cancelled
-    booking.cancellation_reason = data.reason
+    booking.cancellation_reason = data.reason if data else None
     booking.cancelled_by_role = actor_role
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
     db.add(booking)
 
     await db.commit()
@@ -476,7 +514,7 @@ async def _increment_cancellation_metrics(db: AsyncSession, provider_id: int) ->
         profile.cancellation_rate = round(
             profile.total_jobs_cancelled / profile.total_jobs_accepted, 4
         )
-    profile.updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
 
 
@@ -496,7 +534,7 @@ async def reschedule_booking(
 
     sched_dt = data.new_datetime.replace(tzinfo=None) if data.new_datetime.tzinfo else data.new_datetime
     booking.scheduled_datetime = sched_dt
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
     # Reset to pending so provider re-confirms
     booking.status = BookingStatus.pending
     db.add(booking)

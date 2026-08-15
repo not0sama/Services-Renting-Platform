@@ -27,7 +27,7 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      await login({ email, password });
+      await login({ email: email.trim().toLowerCase(), password });
       toast.success("Welcome back!");
     } catch (err: any) {
       const message =

@@ -24,6 +24,12 @@ async def post_job(
     current_user: User = Depends(require_role("customer")),
 ):
     """Customer posts a custom quote job request (FR-13, FR-14)."""
+    if data.latitude is None or data.longitude is None:
+        raise AppException(
+            status.HTTP_400_BAD_REQUEST,
+            "GPS_REQUIRED",
+            "Precise GPS location (latitude and longitude) is required when posting a job."
+        )
     job = await job_service.create_job(db, current_user.id, data)
     return JobOut.model_validate(job)
 
@@ -116,13 +122,14 @@ async def get_job_offers(
 async def accept_offer(
     job_id: int,
     offer_id: int,
+    payment_method: Optional[str] = Query("card"),
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_role("customer")),
 ):
     """Customer accepts an offer → creates booking (FR-19)."""
     from app.services.booking_service import accept_offer_create_booking
     from app.schemas.booking import BookingOut
-    booking = await accept_offer_create_booking(db, current_user.id, job_id, offer_id)
+    booking = await accept_offer_create_booking(db, current_user.id, job_id, offer_id, payment_method=payment_method or "card")
     return BookingOut.model_validate(booking)
 
 

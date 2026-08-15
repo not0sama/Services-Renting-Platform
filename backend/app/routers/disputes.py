@@ -137,7 +137,7 @@ async def resolve_dispute(
     dispute.status = valid_resolutions[body.resolution]
     dispute.admin_notes = body.admin_notes
     dispute.resolved_by_admin_id = admin.id
-    dispute.resolved_at = datetime.now(timezone.utc)
+    dispute.resolved_at = datetime.utcnow()
     db.add(dispute)
 
     # Act on payment based on resolution
@@ -148,7 +148,7 @@ async def resolve_dispute(
             payment.status = PaymentStatus.refunded
         elif body.resolution == "resolved_release":
             payment.status = PaymentStatus.released
-            payment.released_at = datetime.now(timezone.utc)
+            payment.released_at = datetime.utcnow()
         db.add(payment)
 
     await db.commit()

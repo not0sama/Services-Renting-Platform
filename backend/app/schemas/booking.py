@@ -11,6 +11,7 @@ class InstantBookCreate(BaseModel):
     location_address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    payment_method: Optional[str] = "card"
 
 
 class DirectBookingCreate(BaseModel):
@@ -22,6 +23,7 @@ class DirectBookingCreate(BaseModel):
     booking_type: BookingType = BookingType.instant
     price: float
     scheduled_datetime: Optional[datetime] = None
+    payment_method: Optional[str] = "card"
 
 
 class BookingStatusUpdate(BaseModel):
@@ -52,11 +54,15 @@ class BookingOut(BaseModel):
     job_offer_id: Optional[int]
     title: str
     description: Optional[str]
+    location_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     scheduled_datetime: Optional[datetime]
     duration_minutes: int
     price: float
     status: BookingStatus
     booking_type: BookingType
+    payment_method: Optional[str] = "card"
     cancellation_reason: Optional[str]
     revision_notes: Optional[str]
     revision_count: int
@@ -64,6 +70,7 @@ class BookingOut(BaseModel):
     updated_at: datetime
     # Enriched
     customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
     provider_name: Optional[str] = None
     category_name: Optional[str] = None
     payment_status: Optional[str] = None

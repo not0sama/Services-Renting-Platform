@@ -59,7 +59,7 @@ async def update(db: AsyncSession, category_id: int, data: CategoryUpdate) -> Ca
     update_data = data.model_dump(exclude_none=True)
     for k, v in update_data.items():
         setattr(cat, k, v)
-    cat.updated_at = datetime.now(timezone.utc)
+    cat.updated_at = datetime.utcnow()
     db.add(cat)
     await db.commit()
     await db.refresh(cat)
@@ -69,6 +69,6 @@ async def update(db: AsyncSession, category_id: int, data: CategoryUpdate) -> Ca
 async def delete(db: AsyncSession, category_id: int) -> None:
     cat = await get_by_id(db, category_id)
     cat.is_active = False  # soft delete
-    cat.updated_at = datetime.now(timezone.utc)
+    cat.updated_at = datetime.utcnow()
     db.add(cat)
     await db.commit()

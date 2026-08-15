@@ -13,6 +13,7 @@ import {
   RotateCcw,
   ExternalLink,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import api from "@/lib/api";
 import { useLanguage } from "@/context/LanguageContext";
@@ -254,6 +255,18 @@ export default function MySubmittedOffersPage() {
                 </div>
 
                 {/* Actions */}
+                {offer.status === "accepted" && (
+                  <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-100 justify-end shrink-0">
+                    <Link
+                      href={`/provider/offers/${offer.id}`}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>{isAr ? "عرض" : "View"}</span>
+                    </Link>
+                  </div>
+                )}
+
                 {offer.status === "pending" && (
                   <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 justify-end">
                     <button

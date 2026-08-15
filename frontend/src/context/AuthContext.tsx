@@ -79,15 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const urlParams = new URLSearchParams(window.location.search);
       const from = urlParams.get("from");
       if (from && from.startsWith("/")) {
-        router.push(from);
+        window.location.href = from;
         return;
       }
     }
 
-    if (res.data.user.role === "customer") router.push("/customer");
-    else if (res.data.user.role === "provider") router.push("/provider");
-    else if (res.data.user.role === "admin") router.push("/admin");
-  }, [router]);
+    if (res.data.user.role === "customer") window.location.href = "/customer";
+    else if (res.data.user.role === "provider") window.location.href = "/provider";
+    else if (res.data.user.role === "admin") window.location.href = "/admin";
+  }, []);
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await api.post<TokenResponse>("/auth/register", payload);

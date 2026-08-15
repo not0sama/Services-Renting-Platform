@@ -32,6 +32,7 @@ class Payment(SQLModel, table=True):
     net_amount: float = Field(ge=0)          # provider receives: gross - commission
 
     status: PaymentStatus = Field(default=PaymentStatus.held, index=True)
+    payment_method: Optional[str] = Field(default="card", max_length=20)
 
     # Escrow timing (Phase 2 — FR-64)
     auto_release_at: Optional[datetime] = Field(default=None, index=True)

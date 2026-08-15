@@ -3,11 +3,13 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.core.deps import get_current_user, require_role
 from app.db.session import get_session
 from app.models.booking import BookingStatus
 from app.models.user import User
+from app.models.provider import ProviderProfile
 from app.schemas.booking import (
     InstantBookCreate, DirectBookingCreate, BookingStatusUpdate, CancelBooking,
     RescheduleBooking, BookingOut,
@@ -63,7 +65,35 @@ async def get_booking(
     current_user: User = Depends(get_current_user),
 ):
     booking = await booking_service.get_booking(db, booking_id)
-    return BookingOut.model_validate(booking)
+    out = BookingOut.model_validate(booking)
+
+    # Enrich customer name & phone
+    customer = await db.get(User, booking.customer_id)
+    if customer:
+        out.customer_name = customer.name
+        out.customer_phone = customer.phone
+
+    # Enrich provider name
+    p_profile = await db.get(ProviderProfile, booking.provider_id)
+    if p_profile:
+        p_user = await db.get(User, p_profile.user_id)
+        if p_user:
+            out.provider_name = p_user.name
+
+    # Enrich category name
+    from app.models.category import Category
+    cat = await db.get(Category, booking.category_id)
+    if cat:
+        out.category_name = cat.name_en
+
+    # Enrich payment status
+    from app.models.payment import Payment
+    p_res = await db.execute(select(Payment).where(Payment.booking_id == booking_id))
+    payment = p_res.scalar_one_or_none()
+    if payment:
+        out.payment_status = payment.status.value if hasattr(payment.status, "value") else str(payment.status)
+
+    return out
 
 
 @router.patch("/{booking_id}/status", response_model=BookingOut)

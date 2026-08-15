@@ -46,7 +46,7 @@ async def update_location(
     if loc:
         loc.latitude = body.latitude
         loc.longitude = body.longitude
-        loc.updated_at = datetime.now(timezone.utc)
+        loc.updated_at = datetime.utcnow()
     else:
         loc = ProviderLocation(
             booking_id=booking_id,

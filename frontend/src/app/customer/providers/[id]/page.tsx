@@ -2,9 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const LocationPickerMap = dynamic(
+  () => import("@/components/LocationPickerMap"),
+  { ssr: false, loading: () => <div className="h-48 bg-gray-100 rounded-2xl animate-pulse flex items-center justify-center text-xs text-gray-400">Loading Map...</div> }
+);
 import {
   ArrowLeft, Star, MapPin, CheckCircle2, Clock, Heart, MessageSquare,
   Zap, Calendar, ShieldCheck, Check, AlertCircle, Loader2, X, Plus,
+  Banknote, CreditCard, Building2,
 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
@@ -69,6 +76,10 @@ export default function ProviderProfilePage() {
   const [notes, setNotes] = useState("");
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer" | "card">("card");
+  const [locationAddress, setLocationAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | string>(32.8872);
+  const [longitude, setLongitude] = useState<number | string>(13.1913);
 
   useEffect(() => {
     // Set default tomorrow date
@@ -127,7 +138,11 @@ export default function ProviderProfilePage() {
     setBookingError("");
 
     try {
+      const latNum = typeof latitude === "number" ? latitude : parseFloat(String(latitude));
+      const lonNum = typeof longitude === "number" ? longitude : parseFloat(String(longitude));
+
       const scheduled_datetime = new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString();
+      const locText = locationAddress.trim() || notes.trim() || "Customer Location";
 
       let res;
       if (selectedService?.id) {
@@ -135,7 +150,10 @@ export default function ProviderProfilePage() {
         res = await api.post("/bookings/instant", {
           service_id: selectedService.id,
           scheduled_datetime,
-          location_address: notes || undefined,
+          location_address: locText,
+          latitude: isNaN(latNum) ? undefined : latNum,
+          longitude: isNaN(lonNum) ? undefined : lonNum,
+          payment_method: paymentMethod,
         });
       } else {
         // Direct Booking schema matching backend DirectBookingCreate
@@ -147,12 +165,20 @@ export default function ProviderProfilePage() {
           booking_type: "instant",
           price: 150.0,
           scheduled_datetime,
+          payment_method: paymentMethod,
         });
       }
 
-      toast.success(isAr ? "تم إنشاء الحجز بنجاح! جاري تحويلك للإسكرو..." : "Booking created! Redirecting to checkout...");
       setShowBookingModal(false);
-      router.push(`/customer/checkout/${res.data.id}`);
+
+      if (paymentMethod === "card") {
+        toast.success(isAr ? "تم إنشاء الحجز بنجاح! جاري تحويلك للإسكرو..." : "Booking created! Redirecting to checkout...");
+        router.push(`/customer/checkout/${res.data.id}`);
+      } else {
+        const label = paymentMethod === "cash" ? (isAr ? "الدفع نقداً" : "Cash on Delivery") : (isAr ? "التحويل البنكي" : "Bank Transfer");
+        toast.success(isAr ? `تم تأكيد الحجز بنجاح بـ (${label})!` : `Booking confirmed with (${label})!`);
+        router.push(`/customer/bookings`);
+      }
     } catch (err: any) {
       const msg =
         err?.response?.data?.detail ||
@@ -490,6 +516,39 @@ export default function ProviderProfilePage() {
                 </div>
               </div>
 
+              {/* Location Picker Map Component */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-ink-muted)] mb-1.5 flex items-center justify-between">
+                  <span>{isAr ? "موقع الخدمة (خريطة دقيقة)" : "Service Location & GPS Pin"}</span>
+                  <span className="text-[11px] text-violet-600 font-normal">{isAr ? "اسحب الدبوس لتحديد الموقع" : "Drag pin to set exact location"}</span>
+                </label>
+                <LocationPickerMap
+                  lat={typeof latitude === "number" ? latitude : parseFloat(String(latitude)) || 32.8872}
+                  lng={typeof longitude === "number" ? longitude : parseFloat(String(longitude)) || 13.1913}
+                  height="220px"
+                  onLocationSelect={(newLat, newLng, addressDesc) => {
+                    setLatitude(newLat);
+                    setLongitude(newLng);
+                    if (addressDesc) setLocationAddress(addressDesc);
+                  }}
+                />
+              </div>
+
+              {/* Address Description Input */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-ink-muted)] mb-1.5">
+                  {isAr ? "عنوان الموقع التفصيلي *" : "Address Description *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={isAr ? "مثال: حي الأندلس، الشارع الرئيسي، مبنى 12" : "e.g. Building 12, Street 15, Al-Andalous, Tripoli"}
+                  value={locationAddress}
+                  onChange={(e) => setLocationAddress(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-gray-200 text-xs font-medium text-[var(--color-ink)] focus:ring-2 focus:ring-[var(--color-signal)] focus:outline-none"
+                />
+              </div>
+
               {/* Special Instructions / Notes */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-ink-muted)] mb-1.5">
@@ -502,6 +561,53 @@ export default function ProviderProfilePage() {
                   placeholder={isAr ? "أضف تفاصيل الموقع أو أي طلب خاص..." : "Add location instructions or special requests..."}
                   className="w-full p-3 rounded-xl border border-gray-200 text-xs text-[var(--color-ink)] placeholder-gray-400 focus:ring-2 focus:ring-[var(--color-signal)] focus:outline-none"
                 />
+              </div>
+
+              {/* Payment Method Selector */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-ink-muted)] mb-1.5">
+                  {isAr ? "طريقة الدفع" : "Payment Option"}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cash")}
+                    className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+                      paymentMethod === "cash"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-200"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Banknote className="w-4 h-4 text-emerald-600" />
+                    <span>{isAr ? "نقداً (كاش)" : "Cash"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("transfer")}
+                    className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+                      paymentMethod === "transfer"
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-800 ring-2 ring-indigo-200"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4 text-indigo-600" />
+                    <span>{isAr ? "تحويل بنكي" : "Transfer"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("card")}
+                    className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+                      paymentMethod === "card"
+                        ? "border-violet-500 bg-violet-50 text-violet-800 ring-2 ring-violet-200"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <CreditCard className="w-4 h-4 text-violet-600" />
+                    <span>{isAr ? "بطاقة (إسكرو)" : "Card"}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Escrow Guarantee Notice */}

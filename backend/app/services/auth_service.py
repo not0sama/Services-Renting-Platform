@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlmodel import select
+from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.security import (
@@ -34,10 +34,12 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> User:
     if data.role == UserRole.admin:
         raise BadRequestException("Admin accounts cannot be self-registered.")
 
-    # Check email uniqueness
-    existing = await session.exec(select(User).where(User.email == data.email))
+    clean_email = data.email.strip().lower()
+
+    # Check email uniqueness (case-insensitive)
+    existing = await session.exec(select(User).where(func.lower(User.email) == clean_email))
     if existing.first():
-        raise ConflictException(f"An account with email '{data.email}' already exists.")
+        raise ConflictException(f"An account with email '{clean_email}' already exists.")
 
     # Validate password strength
     if not validate_password_strength(data.password):
@@ -60,7 +62,7 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> User:
 
     user = User(
         name=data.name,
-        email=data.email,
+        email=clean_email,
         phone=data.phone,
         role=data.role,
         language_pref=data.language_pref,
@@ -77,13 +79,14 @@ async def register_user(data: RegisterRequest, session: AsyncSession) -> User:
         from app.services.provider_service import get_or_create_profile
         await get_or_create_profile(session, user.id)
 
-    logger.info(f"New {data.role.value} registered: {data.email} (id={user.id}, ref={my_ref_code})")
+    logger.info(f"New {data.role.value} registered: {clean_email} (id={user.id}, ref={my_ref_code})")
     return user
 
 
 async def login_user(data: LoginRequest, session: AsyncSession) -> tuple[str, str, User]:
     """Authenticate a user, return (access_token, refresh_token, user)."""
-    result = await session.exec(select(User).where(User.email == data.email))
+    clean_email = data.email.strip().lower()
+    result = await session.exec(select(User).where(func.lower(User.email) == clean_email))
     user = result.first()
 
     if not user or not verify_password(data.password, user.password_hash):
@@ -132,12 +135,13 @@ async def request_password_reset(email: str, session: AsyncSession) -> str:
     In development the code is returned (logged to console).
     In production this would send an email/SMS.
     """
-    result = await session.exec(select(User).where(User.email == email))
+    clean_email = email.strip().lower()
+    result = await session.exec(select(User).where(func.lower(User.email) == clean_email))
     user = result.first()
 
     # Always return success to avoid email enumeration
     if not user:
-        logger.info(f"Password reset requested for unknown email: {email}")
+        logger.info(f"Password reset requested for unknown email: {clean_email}")
         return ""
 
     code = _generate_reset_code()
@@ -146,13 +150,14 @@ async def request_password_reset(email: str, session: AsyncSession) -> str:
     session.add(user)
 
     # DEV: log the code to console (no email service configured)
-    logger.warning(f"[DEV] Password reset code for {email}: {code}")
+    logger.warning(f"[DEV] Password reset code for {clean_email}: {code}")
     return code
 
 
 async def reset_password(email: str, code: str, new_password: str, session: AsyncSession) -> None:
     """Verify reset code and update the user's password."""
-    result = await session.exec(select(User).where(User.email == email))
+    clean_email = email.strip().lower()
+    result = await session.exec(select(User).where(func.lower(User.email) == clean_email))
     user = result.first()
 
     invalid_msg = "Invalid or expired reset code."

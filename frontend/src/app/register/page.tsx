@@ -59,7 +59,7 @@ function RegisterForm() {
     try {
       await register({
         name: form.name,
-        email: form.email,
+        email: form.email.trim().toLowerCase(),
         phone: form.phone || undefined,
         password: form.password,
         role,

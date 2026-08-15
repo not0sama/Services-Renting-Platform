@@ -6,6 +6,7 @@ from app.models.payment import PaymentStatus
 
 class CheckoutCreate(BaseModel):
     booking_id: int
+    payment_method: Optional[str] = "card"
 
 
 class PaymentOut(BaseModel):
@@ -16,6 +17,7 @@ class PaymentOut(BaseModel):
     commission_amount: float
     net_amount: float
     status: PaymentStatus
+    payment_method: Optional[str] = "card"
     auto_release_at: Optional[datetime]
     released_at: Optional[datetime]
     invoice_number: str

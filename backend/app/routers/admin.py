@@ -121,7 +121,7 @@ async def admin_cancel_booking(
     booking = await get_booking(db, booking_id)
     booking.status = BookingStatus.cancelled
     booking.cancelled_by_role = "admin"
-    booking.updated_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.utcnow()
     db.add(booking)
 
     from app.models.audit import AuditLog

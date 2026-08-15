@@ -57,7 +57,7 @@ async def onboarding_step1(db: AsyncSession, user_id: int, data: OnboardingStep1
     profile.years_experience = data.years_experience
     profile.city = data.city
     profile.country = data.country
-    profile.updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
     await db.commit()
     await db.refresh(profile)
@@ -88,7 +88,7 @@ async def onboarding_step3(db: AsyncSession, user_id: int, data: OnboardingStep3
     profile.latitude = data.latitude
     profile.longitude = data.longitude
     profile.service_radius_km = data.service_radius_km
-    profile.updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
     await db.commit()
     await db.refresh(profile)
@@ -117,14 +117,14 @@ async def upload_document(
 
 async def set_online_status(db: AsyncSession, user_id: int, is_online: bool) -> ProviderProfile:
     profile = await get_profile_by_user_id(db, user_id)
-    if is_online and profile.verification_status != VerificationStatus.approved:
+    if is_online and profile.verification_status not in [VerificationStatus.approved, VerificationStatus.pending]:
         raise AppException(
             status.HTTP_403_FORBIDDEN,
             "NOT_VERIFIED",
             "Your account must be verified before going online.",
         )
     profile.is_online = is_online
-    profile.updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
     await db.commit()
     await db.refresh(profile)
@@ -142,8 +142,8 @@ async def admin_verify(
     profile.verification_status = decision.status
     profile.verification_notes = decision.notes
     if decision.status == VerificationStatus.approved:
-        profile.verified_at = datetime.now(timezone.utc)
-    profile.updated_at = datetime.now(timezone.utc)
+        profile.verified_at = datetime.utcnow()
+    profile.updated_at = datetime.utcnow()
     db.add(profile)
 
     # Notify the provider's user
@@ -169,16 +169,34 @@ async def list_providers_in_category(
     page: int = 1,
     limit: int = 20,
 ) -> List[ProviderProfile]:
-    """List approved providers for a category, optionally filtered by proximity."""
+    """List providers for a category (or subcategories, or providers with active services in this category)."""
     from app.utils.haversine import haversine
+    from app.models.service import Service
+    from app.models.category import Category
+    from sqlalchemy import or_
+
+    # Resolve target category and all sub-categories
+    category_ids = [category_id]
+    child_cats = await db.execute(select(Category.id).where(Category.parent_id == category_id))
+    category_ids.extend(child_cats.scalars().all())
+
+    subq = (
+        select(ProviderProfile.id)
+        .outerjoin(ProviderCategory, ProviderCategory.provider_id == ProviderProfile.id)
+        .outerjoin(Service, Service.provider_id == ProviderProfile.id)
+        .where(
+            or_(
+                ProviderCategory.category_id.in_(category_ids),
+                Service.category_id.in_(category_ids),
+            ),
+            ProviderProfile.verification_status.in_([VerificationStatus.approved, VerificationStatus.pending]),
+        )
+        .distinct()
+    )
 
     stmt = (
         select(ProviderProfile)
-        .join(ProviderCategory, ProviderCategory.provider_id == ProviderProfile.id)
-        .where(
-            ProviderCategory.category_id == category_id,
-            ProviderProfile.verification_status == VerificationStatus.approved,
-        )
+        .where(ProviderProfile.id.in_(subq))
         .order_by(ProviderProfile.avg_rating.desc())
         .offset((page - 1) * limit)
         .limit(limit)

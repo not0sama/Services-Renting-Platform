@@ -51,9 +51,12 @@ class Booking(SQLModel, table=True):
     service_id: Optional[int] = Field(default=None, foreign_key="services.id")        # Instant Book
     job_offer_id: Optional[int] = Field(default=None, foreign_key="offers.id")         # Custom Quote
 
-    # Content
+    # Content & Location
     title: str = Field(max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
+    location_address: Optional[str] = Field(default=None, max_length=500)
+    latitude: Optional[float] = Field(default=None)
+    longitude: Optional[float] = Field(default=None)
 
     # Scheduling
     scheduled_datetime: Optional[datetime] = Field(default=None, index=True)
@@ -65,6 +68,7 @@ class Booking(SQLModel, table=True):
     # State machine
     status: BookingStatus = Field(default=BookingStatus.pending, index=True)
     booking_type: BookingType = Field(default=BookingType.instant)
+    payment_method: Optional[str] = Field(default="card", max_length=20)
 
     # Cancellation
     cancellation_reason: Optional[str] = Field(default=None, max_length=500)

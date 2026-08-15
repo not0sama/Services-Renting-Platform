@@ -39,6 +39,7 @@ import { useLanguage } from "@/context/LanguageContext";
 interface Category {
   id: number;
   name_en: string;
+  name_ar?: string;
   slug: string;
   icon_url?: string;
   booking_mode: string;
@@ -168,8 +169,22 @@ export default function CustomerCategoriesPage() {
   }, []);
 
   const allFlat: Category[] = categories.flatMap((c) => [c, ...(c.children ?? [])]);
-  const filtered = search
-    ? allFlat.filter((c) => c.name_en.toLowerCase().includes(search.toLowerCase()))
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? allFlat.filter((c) => {
+        const en = (c.name_en || "").toLowerCase();
+        const ar = (c.name_ar || "").toLowerCase();
+        const slug = (c.slug || "").toLowerCase();
+        return (
+          en.includes(q) ||
+          ar.includes(q) ||
+          slug.includes(q) ||
+          (q.includes("plumb") && en.includes("plumb")) ||
+          (q.includes("electric") && en.includes("electric")) ||
+          (q.includes("clean") && en.includes("clean")) ||
+          (q.includes("repair") && (en.includes("repair") || en.includes("hvac")))
+        );
+      })
     : categories;
 
   return (
